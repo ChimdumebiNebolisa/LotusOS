@@ -27,6 +27,9 @@
     xorriso -version
     command -v qemu-system-x86_64
     qemu-system-x86_64 --version
+    sudo bash os/scripts/build-iso.sh
+    ps -eo pid,ppid,stat,comm,args
+    sudo -n true
 
 ## Dependency Check
 
@@ -37,11 +40,11 @@
 
 ## Build Result
 
-- Result: pending
+- Result: blocked before build start
 - ISO created: no
-- ISO path: pending
-- ISO size: pending
-- Errors: none yet
+- ISO path: none
+- ISO size: none
+- Errors: `sudo bash os/scripts/build-iso.sh` did not start live-build because sudo requires an interactive password. The command exceeded the tool timeout while waiting for credentials.
 
 ## QEMU Boot Result
 
@@ -55,11 +58,13 @@
 
 ## Fixes Applied
 
-- None yet.
+- Stopped a stale timed-out `sudo apt update` process from the earlier dependency installation attempt.
+- Confirmed `sudo -n true` fails with `sudo: a password is required`.
 
 ## Commits Created
 
-- pending
+- `d99fa64 docs: record phase 2 environment and dependency check`
+- pending: document sudo build blocker
 
 ## Known Limitations
 
@@ -67,8 +72,8 @@
 - QEMU boot has not been attempted in Phase 2 yet.
 - Calamares remains planned, not wired.
 - Lotus Shell remains a placeholder, not an implemented Tauri app.
+- Phase 2 cannot continue until the build command is run with an interactive sudo session.
 
 ## Next Step
 
-- Attempt the first live-build ISO build with `sudo bash os/scripts/build-iso.sh`.
-
+- Run `sudo bash os/scripts/build-iso.sh` in WSL after entering the sudo password, or run `sudo -v` in WSL and then resume the Codex task before the sudo timestamp expires.
