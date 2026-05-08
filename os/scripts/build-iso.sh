@@ -44,12 +44,22 @@ else
 fi
 
 repo_root="$(cd -- "$script_dir/../.." && pwd)"
-live_build_dir="$repo_root/os/live-build"
+source_live_build_dir="$repo_root/os/live-build"
+build_root="${LOTUSOS_BUILD_ROOT:-/tmp/lotusos-live-build}"
+live_build_dir="$build_root/live-build"
 artifacts_dir="$repo_root/artifacts"
 iso_name="lotusos-amd64.iso"
 
 [[ -d "$repo_root/.git" ]] || fail "Run from inside the LotusOS repository."
-[[ -d "$live_build_dir/config" ]] || fail "Missing live-build config at $live_build_dir/config."
+[[ -d "$source_live_build_dir/config" ]] || fail "Missing live-build config at $source_live_build_dir/config."
+
+case "$build_root" in
+  /tmp/lotusos-*|/var/tmp/lotusos-*)
+    ;;
+  *)
+    fail "Refusing build root outside an expected temporary LotusOS path: $build_root"
+    ;;
+esac
 
 case "$(uname -s)" in
   Linux)
@@ -78,7 +88,8 @@ HELP
 fi
 
 log "Repository: $repo_root"
-log "live-build directory: $live_build_dir"
+log "Source live-build directory: $source_live_build_dir"
+log "Working live-build directory: $live_build_dir"
 log "Artifact target: $artifacts_dir/$iso_name"
 
 if [[ "$check_only" == true ]]; then
@@ -91,6 +102,17 @@ if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
 fi
 
 mkdir -p "$artifacts_dir"
+
+log "Preparing native Linux build workspace at $build_root"
+rm -rf -- "$build_root"
+mkdir -p "$live_build_dir"
+cp -a "$source_live_build_dir/auto" "$source_live_build_dir/config" "$source_live_build_dir/hooks" "$live_build_dir/"
+rm -f -- \
+  "$live_build_dir/config/binary" \
+  "$live_build_dir/config/bootstrap" \
+  "$live_build_dir/config/chroot" \
+  "$live_build_dir/config/common" \
+  "$live_build_dir/config/source"
 
 log "Starting live-build."
 (
