@@ -13,6 +13,7 @@ lb config noauto \
   --mirror-binary "http://deb.debian.org/debian" \
   --mirror-chroot-security "http://security.debian.org/debian-security" \
   --mirror-binary-security "http://security.debian.org/debian-security" \
+  --security false \
   --binary-images iso-hybrid \
   --bootappend-live "boot=live components quiet splash hostname=lotusos username=lotus" \
   --debian-installer false \
