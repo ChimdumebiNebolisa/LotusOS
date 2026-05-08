@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Lotus Shell
+Comment=LotusOS workspace layer placeholder
+Exec=sh -c 'kdialog --title "Lotus Shell" --msgbox "Lotus Shell is reserved for the AI-native student/developer workspace. The Tauri app is planned for Phase 3." 2>/dev/null || xmessage "Lotus Shell placeholder: planned for Phase 3."'
+Icon=computer
+Terminal=false
+Categories=Utility;Development;
+

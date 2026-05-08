@@ -1,0 +1,44 @@
+# LotusOS package selection draft
+#
+# This file documents the intended package set. The live-build package list
+# used by the initial scaffold is in os/live-build/config/package-lists/.
+
+## Core
+sudo
+network-manager
+ca-certificates
+curl
+wget
+git
+vim
+nano
+unzip
+build-essential
+
+## Desktop
+kde-plasma-desktop
+sddm
+plasma-nm
+konsole
+dolphin
+ark
+spectacle
+okular
+firefox-esr
+libreoffice
+kate
+
+## Developer
+nodejs
+npm
+python3
+python3-pip
+rustc
+cargo
+
+## Optional Later
+# firmware-linux: consider only with documented Debian archive areas and licensing implications.
+# codium or code: consider only after documenting repository/licensing tradeoffs.
+# docker.io: consider post-install first unless the ISO use case clearly requires it.
+# pnpm: consider via corepack or npm after Node version policy is set.
+

@@ -1,0 +1,7 @@
+NAME="LotusOS"
+ID=lotusos
+PRETTY_NAME="LotusOS MVP Scaffold"
+VERSION_CODENAME=trixie
+BASE_ID=debian
+LOTUSOS_STAGE="scaffold"
+
