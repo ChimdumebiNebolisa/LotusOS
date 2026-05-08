@@ -6,6 +6,11 @@
 /os/live-build/binary/
 /os/live-build/local/
 /os/live-build/tmp/
+/os/live-build/config/binary
+/os/live-build/config/bootstrap
+/os/live-build/config/chroot
+/os/live-build/config/common
+/os/live-build/config/source
 /os/live-build/*.iso
 /os/live-build/*.contents
 /os/live-build/*.files
@@ -15,4 +20,3 @@
 .DS_Store
 Thumbs.db
 *.log
-
