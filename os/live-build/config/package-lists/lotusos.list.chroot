@@ -14,7 +14,7 @@ plasma-nm
 konsole
 dolphin
 ark
-spectacle
+kde-spectacle
 okular
 firefox-esr
 libreoffice
@@ -25,4 +25,3 @@ python3
 python3-pip
 rustc
 cargo
-
