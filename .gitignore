@@ -1,0 +1,18 @@
+# Generated OS build artifacts
+/artifacts/
+/os/live-build/.build/
+/os/live-build/cache/
+/os/live-build/chroot/
+/os/live-build/binary/
+/os/live-build/local/
+/os/live-build/tmp/
+/os/live-build/*.iso
+/os/live-build/*.contents
+/os/live-build/*.files
+/os/live-build/*.packages
+
+# Common local noise
+.DS_Store
+Thumbs.db
+*.log
+
