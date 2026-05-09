@@ -101,6 +101,69 @@ if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
   fail "Building with live-build usually requires root. Re-run with sudo: sudo bash os/scripts/build-iso.sh"
 fi
 
+repair_grub2_eltorito_iso() {
+  local grub_img="$live_build_dir/binary/boot/grub/grub_eltorito"
+  local cdboot_img="$live_build_dir/chroot/usr/lib/grub/i386-pc/cdboot.img"
+  local grub_dir="$live_build_dir/chroot/usr/lib/grub/i386-pc"
+  local grub_mkimage="$live_build_dir/chroot/usr/bin/grub-mkimage"
+  local linker="$live_build_dir/chroot/lib64/ld-linux-x86-64.so.2"
+  local lib_path="$live_build_dir/chroot/lib/x86_64-linux-gnu:$live_build_dir/chroot/usr/lib/x86_64-linux-gnu"
+  local core_img
+  local grub_size
+
+  [[ -f "$grub_img" ]] || return 0
+
+  grub_size="$(stat -c '%s' "$grub_img")"
+  if ((grub_size > 4096)); then
+    log "GRUB2 El Torito image already contains a core image ($grub_size bytes)."
+    return 0
+  fi
+
+  log "Detected GRUB2 El Torito stub without core image ($grub_size bytes)."
+  log "Rebuilding GRUB2 El Torito image with explicit /boot/grub prefix."
+
+  [[ -f "$cdboot_img" ]] || fail "Missing GRUB cdboot image: $cdboot_img"
+  [[ -d "$grub_dir" ]] || fail "Missing GRUB module directory: $grub_dir"
+  [[ -x "$grub_mkimage" ]] || fail "Missing grub-mkimage in live-build chroot: $grub_mkimage"
+  [[ -x "$linker" ]] || fail "Missing chroot dynamic linker: $linker"
+
+  core_img="$(mktemp)"
+  "$linker" --library-path "$lib_path" "$grub_mkimage" \
+    -d "$grub_dir" \
+    -O i386-pc \
+    -p /boot/grub \
+    -o "$core_img" \
+    biosdisk iso9660 normal configfile
+
+  cat "$cdboot_img" "$core_img" > "$grub_img"
+  rm -f -- "$core_img"
+
+  grub_size="$(stat -c '%s' "$grub_img")"
+  if ((grub_size <= 4096)); then
+    fail "Rebuilt GRUB2 El Torito image is still too small: $grub_size bytes"
+  fi
+
+  log "Rebuilt GRUB2 El Torito image ($grub_size bytes)."
+  log "Rebuilding ISO with repaired GRUB2 boot image."
+
+  rm -f -- "$live_build_dir/binary.iso"
+  xorriso -as mkisofs \
+    -J \
+    -l \
+    -cache-inodes \
+    -allow-multidot \
+    -A "LotusOS Live" \
+    -publisher "LotusOS Project" \
+    -V "LotusOS amd64" \
+    -no-emul-boot \
+    -boot-load-size 4 \
+    -boot-info-table \
+    -r \
+    -b boot/grub/grub_eltorito \
+    -o "$live_build_dir/binary.iso" \
+    "$live_build_dir/binary"
+}
+
 mkdir -p "$artifacts_dir"
 
 log "Preparing native Linux build workspace at $build_root"
@@ -120,6 +183,8 @@ log "Starting live-build."
   lb config
   lb build
 )
+
+repair_grub2_eltorito_iso
 
 mapfile -t produced_isos < <(find "$live_build_dir" -maxdepth 1 -type f -name '*.iso' -printf '%T@ %p\n' | sort -nr | awk '{print $2}')
 if ((${#produced_isos[@]} == 0)); then
