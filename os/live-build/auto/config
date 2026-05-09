@@ -17,7 +17,7 @@ lb config noauto \
   --firmware-binary false \
   --firmware-chroot false \
   --initsystem systemd \
-  --binary-images iso-hybrid \
+  --binary-images iso \
   --bootloader grub2 \
   --memtest none \
   --bootappend-live "boot=live components quiet splash hostname=lotusos username=lotus" \
