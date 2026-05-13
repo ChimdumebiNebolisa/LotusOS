@@ -144,7 +144,26 @@ repair_grub2_eltorito_iso() {
   fi
 
   log "Rebuilt GRUB2 El Torito image ($grub_size bytes)."
-  log "Rebuilding ISO with repaired GRUB2 boot image."
+}
+
+ensure_grub_menu_defaults() {
+  local grub_cfg="$live_build_dir/binary/boot/grub/grub.cfg"
+  local tmp_cfg
+
+  [[ -f "$grub_cfg" ]] || return 0
+
+  tmp_cfg="$(mktemp)"
+  {
+    printf 'set timeout=5\n'
+    printf 'set timeout_style=menu\n'
+    printf 'set default=0\n'
+    awk '!/^[[:space:]]*set[[:space:]]+(timeout|timeout_style|default)=/' "$grub_cfg"
+  } > "$tmp_cfg"
+  mv "$tmp_cfg" "$grub_cfg"
+}
+
+rebuild_binary_iso() {
+  log "Rebuilding ISO from live-build binary tree."
 
   rm -f -- "$live_build_dir/binary.iso"
   xorriso -as mkisofs \
@@ -184,7 +203,9 @@ log "Starting live-build."
   lb build
 )
 
+ensure_grub_menu_defaults
 repair_grub2_eltorito_iso
+rebuild_binary_iso
 
 mapfile -t produced_isos < <(find "$live_build_dir" -maxdepth 1 -type f -name '*.iso' -printf '%T@ %p\n' | sort -nr | awk '{print $2}')
 if ((${#produced_isos[@]} == 0)); then
