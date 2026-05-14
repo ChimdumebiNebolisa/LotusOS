@@ -22,7 +22,7 @@ plasma-nm
 konsole
 dolphin
 ark
-spectacle
+kde-spectacle
 okular
 firefox-esr
 libreoffice
@@ -41,4 +41,3 @@ cargo
 # codium or code: consider only after documenting repository/licensing tradeoffs.
 # docker.io: consider post-install first unless the ISO use case clearly requires it.
 # pnpm: consider via corepack or npm after Node version policy is set.
-
