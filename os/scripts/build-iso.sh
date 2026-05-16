@@ -108,6 +108,7 @@ repair_grub2_eltorito_iso() {
   local grub_mkimage="$live_build_dir/chroot/usr/bin/grub-mkimage"
   local linker="$live_build_dir/chroot/lib64/ld-linux-x86-64.so.2"
   local lib_path="$live_build_dir/chroot/lib/x86_64-linux-gnu:$live_build_dir/chroot/usr/lib/x86_64-linux-gnu"
+  local bootstrap_cfg
   local core_img
   local grub_size
 
@@ -127,16 +128,25 @@ repair_grub2_eltorito_iso() {
   [[ -x "$grub_mkimage" ]] || fail "Missing grub-mkimage in live-build chroot: $grub_mkimage"
   [[ -x "$linker" ]] || fail "Missing chroot dynamic linker: $linker"
 
+  bootstrap_cfg="$(mktemp)"
   core_img="$(mktemp)"
+  cat > "$bootstrap_cfg" <<'EOF'
+set prefix=($root)/boot/grub
+set root=cd0
+configfile /boot/grub/grub.cfg
+EOF
   "$linker" --library-path "$lib_path" "$grub_mkimage" \
+    -c "$bootstrap_cfg" \
     -d "$grub_dir" \
     -O i386-pc \
     -p /boot/grub \
     -o "$core_img" \
-    biosdisk iso9660 normal configfile
+    biosdisk iso9660 part_msdos normal configfile search search_fs_file search_fs_uuid search_label linux \
+    all_video boot cat echo font gettext gfxmenu gfxterm gfxterm_background png tga \
+    test video video_bochs video_cirrus
 
   cat "$cdboot_img" "$core_img" > "$grub_img"
-  rm -f -- "$core_img"
+  rm -f -- "$bootstrap_cfg" "$core_img"
 
   grub_size="$(stat -c '%s' "$grub_img")"
   if ((grub_size <= 4096)); then
@@ -164,6 +174,30 @@ repair_grub2_eltorito_iso() {
     "$live_build_dir/binary"
 }
 
+ensure_grub_menu_defaults() {
+  local grub_cfg="$live_build_dir/binary/boot/grub/grub.cfg"
+  local kernel_path
+
+  [[ -f "$grub_cfg" ]] || return 0
+
+  log "Enforcing GRUB menu defaults for unattended live boot."
+  kernel_path="$(sed -n 's/^[[:space:]]*linux[[:space:]]\+\([^[:space:]]\+\).*/\1/p' "$grub_cfg" | head -n 1)"
+  sed -i \
+    -e '/^set default=/d' \
+    -e '/^set root=/d' \
+    -e '/^search --no-floppy --set=root --file /d' \
+    -e '/^set timeout_style=/d' \
+    -e '/^set timeout=/d' \
+    "$grub_cfg"
+  if [[ -n "$kernel_path" ]]; then
+    sed -i "s|^[[:space:]]*linux\\([[:space:]]\\+\\)/live/|linux\\1(\\\$root)/live/|" "$grub_cfg"
+    sed -i "s|^[[:space:]]*initrd\\([[:space:]]\\+\\)/live/|initrd\\1(\\\$root)/live/|" "$grub_cfg"
+    sed -i "1i set timeout=5\nset timeout_style=menu\nset default=0\nset root=cd0\nsearch --no-floppy --set=root --file $kernel_path\n" "$grub_cfg"
+  else
+    sed -i '1i set timeout=5\nset timeout_style=menu\nset default=0\nset root=cd0\n' "$grub_cfg"
+  fi
+}
+
 mkdir -p "$artifacts_dir"
 
 log "Preparing native Linux build workspace at $build_root"
@@ -184,6 +218,7 @@ log "Starting live-build."
   lb build
 )
 
+ensure_grub_menu_defaults
 repair_grub2_eltorito_iso
 
 mapfile -t produced_isos < <(find "$live_build_dir" -maxdepth 1 -type f -name '*.iso' -printf '%T@ %p\n' | sort -nr | awk '{print $2}')
