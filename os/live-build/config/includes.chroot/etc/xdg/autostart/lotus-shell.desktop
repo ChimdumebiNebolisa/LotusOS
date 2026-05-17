@@ -2,7 +2,7 @@
 Type=Application
 Name=Lotus Shell
 Comment=Launch Lotus Shell on live session startup
-Exec=/opt/lotus-shell/lotus-shell
+Exec=/usr/local/bin/lotus-shell-launch
 Icon=computer
 Terminal=false
 Categories=Utility;Development;
