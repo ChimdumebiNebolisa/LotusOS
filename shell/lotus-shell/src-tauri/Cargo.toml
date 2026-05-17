@@ -1,0 +1,18 @@
+[package]
+name = "lotus-shell"
+version = "0.1.0"
+description = "Lotus Shell for LotusOS"
+authors = ["LotusOS Project"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+panic = "abort"
+strip = true

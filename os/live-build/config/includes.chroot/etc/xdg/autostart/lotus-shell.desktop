@@ -1,8 +1,10 @@
 [Desktop Entry]
 Type=Application
 Name=Lotus Shell
-Comment=LotusOS workspace layer
+Comment=Launch Lotus Shell on live session startup
 Exec=/opt/lotus-shell/lotus-shell
 Icon=computer
 Terminal=false
 Categories=Utility;Development;
+X-GNOME-Autostart-enabled=true
+X-KDE-autostart-after=panel

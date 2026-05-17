@@ -21,6 +21,12 @@ fail() {
   exit 1
 }
 
+version_ge() {
+  local actual="$1"
+  local minimum="$2"
+  [[ "$(printf '%s\n%s\n' "$minimum" "$actual" | sort -V | head -n 1)" == "$minimum" ]]
+}
+
 check_only=false
 for arg in "$@"; do
   case "$arg" in
@@ -45,6 +51,7 @@ fi
 
 repo_root="$(cd -- "$script_dir/../.." && pwd)"
 source_live_build_dir="$repo_root/os/live-build"
+lotus_shell_dir="$repo_root/shell/lotus-shell"
 build_root="${LOTUSOS_BUILD_ROOT:-/tmp/lotusos-live-build}"
 live_build_dir="$build_root/live-build"
 artifacts_dir="$repo_root/artifacts"
@@ -174,6 +181,48 @@ EOF
     "$live_build_dir/binary"
 }
 
+stage_lotus_shell() {
+  local shell_package_json="$lotus_shell_dir/package.json"
+  local shell_stage_dir="$live_build_dir/config/includes.chroot/opt/lotus-shell"
+  local shell_build_root="$build_root/lotus-shell-build"
+  local shell_source_dir="$shell_build_root/source"
+  local shell_target_dir="$shell_build_root/target"
+  local shell_binary="$shell_target_dir/release/lotus-shell"
+  local cargo_version
+  local rustc_version
+
+  [[ -f "$shell_package_json" ]] || return 0
+
+  for cmd in node npm cargo rustc; do
+    command -v "$cmd" >/dev/null 2>&1 || fail "Lotus Shell packaging requires host command: $cmd"
+  done
+
+  cargo_version="$(cargo --version | awk '{print $2}')"
+  rustc_version="$(rustc --version | awk '{print $2}')"
+  version_ge "$cargo_version" "1.85.0" || fail "Lotus Shell packaging requires cargo >= 1.85.0. Load a current rustup stable toolchain before running the ISO build."
+  version_ge "$rustc_version" "1.85.0" || fail "Lotus Shell packaging requires rustc >= 1.85.0. Load a current rustup stable toolchain before running the ISO build."
+
+  log "Building Lotus Shell for inclusion in the live image."
+  rm -rf -- "$shell_build_root"
+  mkdir -p "$shell_source_dir"
+  tar \
+    --exclude='./node_modules' \
+    --exclude='./dist' \
+    --exclude='./src-tauri/target' \
+    -cf - \
+    -C "$lotus_shell_dir" \
+    . | tar -xf - -C "$shell_source_dir"
+  (
+    cd "$shell_source_dir"
+    npm ci --cache "$build_root/npm-cache"
+    CARGO_TARGET_DIR="$shell_target_dir" npm run tauri build -- --no-bundle
+  )
+
+  [[ -x "$shell_binary" ]] || fail "Lotus Shell build did not produce $shell_binary"
+  install -Dm755 "$shell_binary" "$shell_stage_dir/lotus-shell"
+  log "Staged Lotus Shell binary at $shell_stage_dir/lotus-shell"
+}
+
 ensure_grub_menu_defaults() {
   local grub_cfg="$live_build_dir/binary/boot/grub/grub.cfg"
   local kernel_path
@@ -210,6 +259,8 @@ rm -f -- \
   "$live_build_dir/config/chroot" \
   "$live_build_dir/config/common" \
   "$live_build_dir/config/source"
+
+stage_lotus_shell
 
 log "Starting live-build."
 (
