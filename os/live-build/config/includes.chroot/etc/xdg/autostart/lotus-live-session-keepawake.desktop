@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=LotusOS Live Session Keepawake
+Comment=Disable X11 blanking and DPMS in the live session
+Exec=/bin/sh /usr/local/bin/lotus-live-session-keepawake
+Icon=preferences-desktop-display
+Terminal=false
+OnlyShowIn=KDE;
+X-GNOME-Autostart-enabled=true
+X-KDE-autostart-phase=1

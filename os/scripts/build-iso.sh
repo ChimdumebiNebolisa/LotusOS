@@ -226,11 +226,13 @@ stage_lotus_shell() {
 ensure_grub_menu_defaults() {
   local grub_cfg="$live_build_dir/binary/boot/grub/grub.cfg"
   local kernel_path
+  local kernel_version
 
   [[ -f "$grub_cfg" ]] || return 0
 
-  log "Enforcing GRUB menu defaults for unattended live boot."
+  log "Enforcing GRUB menu defaults for unattended LotusOS live boot."
   kernel_path="$(sed -n 's/^[[:space:]]*linux[[:space:]]\+\([^[:space:]]\+\).*/\1/p' "$grub_cfg" | head -n 1)"
+  kernel_version="${kernel_path#/live/vmlinuz-}"
   sed -i \
     -e '/^set default=/d' \
     -e '/^set root=/d' \
@@ -241,9 +243,19 @@ ensure_grub_menu_defaults() {
   if [[ -n "$kernel_path" ]]; then
     sed -i "s|^[[:space:]]*linux\\([[:space:]]\\+\\)/live/|linux\\1(\\\$root)/live/|" "$grub_cfg"
     sed -i "s|^[[:space:]]*initrd\\([[:space:]]\\+\\)/live/|initrd\\1(\\\$root)/live/|" "$grub_cfg"
-    sed -i "1i set timeout=5\nset timeout_style=menu\nset default=0\nset root=cd0\nsearch --no-floppy --set=root --file $kernel_path\n" "$grub_cfg"
+    sed -i \
+      -e 's|^menuentry "Debian GNU/Linux - live"|menuentry "LotusOS Live"|' \
+      -e 's|^menuentry "Debian GNU/Linux - live (fail-safe mode)"|menuentry "LotusOS Live (safe graphics)"|' \
+      -e "s|^menuentry \"Debian GNU/Linux - live, kernel $kernel_version\"|menuentry \"LotusOS Live (kernel $kernel_version)\"|" \
+      -e "s|^menuentry \"Debian GNU/Linux - live, kernel $kernel_version (fail-safe mode)\"|menuentry \"LotusOS Live (kernel $kernel_version, safe graphics)\"|" \
+      "$grub_cfg"
+    sed -i "1i set timeout=3\nset timeout_style=menu\nset default=0\nset root=cd0\nsearch --no-floppy --set=root --file $kernel_path\n" "$grub_cfg"
   else
-    sed -i '1i set timeout=5\nset timeout_style=menu\nset default=0\nset root=cd0\n' "$grub_cfg"
+    sed -i \
+      -e 's|^menuentry "Debian GNU/Linux - live"|menuentry "LotusOS Live"|' \
+      -e 's|^menuentry "Debian GNU/Linux - live (fail-safe mode)"|menuentry "LotusOS Live (safe graphics)"|' \
+      "$grub_cfg"
+    sed -i '1i set timeout=3\nset timeout_style=menu\nset default=0\nset root=cd0\n' "$grub_cfg"
   fi
 }
 

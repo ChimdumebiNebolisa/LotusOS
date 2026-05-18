@@ -25,9 +25,9 @@ Generated ISO artifacts should go under `artifacts/` and should not be treated a
 
 ## Lotus Shell Track
 
-Lotus Shell is reserved under `shell/lotus-shell/`.
+Lotus Shell lives under `shell/lotus-shell/`.
 
-The intended implementation is Tauri + React + TypeScript + Rust. Its MVP screens are:
+The implementation track is Tauri + React + TypeScript + Rust. Its MVP screens are:
 
 - Home.
 - Projects.
@@ -37,6 +37,10 @@ The intended implementation is Tauri + React + TypeScript + Rust. Its MVP screen
 - Settings placeholder.
 
 Real AI integration is planned after boot and install reliability. The AI Hub must not ship with bundled API keys or cloud-only assumptions.
+
+The live image currently packages the Lotus Shell Linux binary into `/opt/lotus-shell/lotus-shell`, installs a desktop launcher, and uses an XDG autostart wrapper so the KDE live session can either launch Lotus Shell or record a visible/logged startup failure.
+
+The remaining Phase 3C blocker is not Lotus Shell packaging. The unresolved issue is live-session stability under the supported VirtualBox `VMSVGA` plus 3D `on` lane.
 
 ## Installer Track
 
@@ -52,4 +56,3 @@ The first live ISO may ship without a wired installer. LotusOS should not be des
 - No custom privileged background services before a clear need exists.
 - Use Debian package sources by default.
 - Document any non-Debian repository before adding it to the image.
-

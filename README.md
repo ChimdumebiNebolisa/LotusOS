@@ -8,17 +8,27 @@ Lotus Shell is the custom app/interface layer inside LotusOS. It is not the whol
 
 ## Current Status
 
-This repository now contains the initial Phase 0 and Phase 1 scaffold:
+This repository now contains a verified live ISO build path and a packaged Lotus Shell scaffold:
 
 - Project direction docs.
 - Debian `live-build` OS scaffold targeting Debian 13 `trixie`.
 - KDE Plasma as the first desktop target.
-- Package list drafts.
+- A tracked Phase 2 GRUB boot repair path.
 - Branding placeholder locations.
 - Safe build, test, and clean script entrypoints.
-- Reserved `shell/lotus-shell/` path for the future Tauri app.
+- A Tauri + React + TypeScript + Rust Lotus Shell scaffold that is packaged into the live image and launched from the KDE session.
 
-No ISO has been built or verified yet. LotusOS is not installable yet. Lotus Shell is currently a planned first-class app, not an implemented app.
+Current verification state:
+
+- The ISO rebuild succeeds and produces `artifacts/lotusos-amd64.iso`.
+- The rebuilt ISO GRUB menu now uses LotusOS wording and a `3` second timeout.
+- VirtualBox verification is primarily supported with `VMSVGA` and 3D acceleration `on`.
+- `VMSVGA` with 3D acceleration `off` still has the known `vmwgfx` instability and is not a packaging blocker.
+- Phase 3C implementation exists and Lotus Shell does appear under `VMSVGA` with 3D acceleration `on`, but the session later degrades to a black screen, so stable desktop acceptance is still not re-proven.
+- A follow-up live-session X11 anti-blanking and DPMS disable diagnostic did not prevent the later black-screen failure.
+- The remaining blocker is VirtualBox graphics and session stability, not Lotus Shell packaging.
+
+LotusOS is still a live ISO only. It is not installable yet because Calamares is not wired and verified.
 
 ## MVP Target
 
@@ -62,6 +72,20 @@ Boot the ISO in QEMU:
 bash os/scripts/test-qemu.sh artifacts/lotusos-amd64.iso
 ```
 
+Primary VirtualBox verification mode:
+
+- Graphics controller: `VMSVGA`
+- 3D acceleration: `on`
+- RAM: `4096 MB`
+- CPUs: `2`
+- VRAM: `128 MB`
+
+Known caveats:
+
+- `VMSVGA` with 3D acceleration `off` can still hit the known `vmwgfx` unsupported-hypervisor instability and black-screen behavior.
+- Under `VMSVGA` with 3D acceleration `on`, Lotus Shell can become visible and the session can still later degrade to a black screen.
+- Disabling simple X11 blanking and DPMS in the live session did not fix that later degradation.
+
 Clean generated build artifacts:
 
 ```bash
@@ -77,4 +101,3 @@ bash os/scripts/clean.sh
 - Build notes: `docs/build.md`
 - Decisions: `docs/decisions/`
 - Verification notes: `docs/verification/`
-
