@@ -27,8 +27,9 @@ Current verification state:
 - Phase 3C implementation exists and Lotus Shell does appear under `VMSVGA` with 3D acceleration `on`, but the session later degrades to a black screen, so stable desktop acceptance is still not re-proven.
 - A follow-up live-session X11 anti-blanking and DPMS disable diagnostic did not prevent the later black-screen failure.
 - The remaining blocker is VirtualBox graphics and session stability, not Lotus Shell packaging.
+- Phase 4 installer integration now adds a Calamares-based installer path to the live image, but direct launcher visibility and installer-open proof are still only partially re-verified.
 
-LotusOS is still a live ISO only. It is not installable yet because Calamares is not wired and verified.
+LotusOS now ships a wired Calamares installer path in the live ISO, but it should still be treated as partially verified until the installer launcher and open flow are directly re-proven in a disposable VM install pass.
 
 ## MVP Target
 

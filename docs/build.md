@@ -52,9 +52,10 @@ Current verified state:
 - The build path produces a successful ISO.
 - Lotus Shell packaging into the live image is verified from the build and include paths.
 - GRUB wording and timeout polish are verified from the rebuilt ISO.
+- A Calamares-based installer path is now packaged into the live image with tracked LotusOS overrides under `os/live-build/config/includes.chroot/etc/calamares/`.
 - VirtualBox verification is primarily supported with `VMSVGA` and 3D acceleration `on`.
 - `VMSVGA` with 3D acceleration `off` remains a known `vmwgfx` caveat.
-- Phase 3C implementation exists, but stable desktop acceptance is still not re-proven.
+- Stable live-session acceptance beyond the current GUI checkpoints is still not fully re-proven.
 
 ## QEMU Test
 
@@ -106,6 +107,27 @@ Current limitation:
 - Lotus Shell is visibly launchable under `VMSVGA` with 3D acceleration `on`, but the session still later degrades to a black screen.
 - A minimal follow-up diagnostic that disabled `xset s off`, `xset -dpms`, and `xset s noblank` in the live session did not prevent the black-screen outcome.
 - The remaining blocker is VirtualBox graphics and session stability, not Lotus Shell packaging.
+
+## Installer Launch And Safe Test
+
+Current installer wiring:
+
+- Live launcher path: `/usr/share/applications/calamares-install-debian.desktop`
+- Launcher command: `calamares-install-debian`
+- Tracked LotusOS overrides:
+  - `os/live-build/config/includes.chroot/etc/calamares/settings.conf`
+  - `os/live-build/config/includes.chroot/etc/calamares/modules/welcome.conf`
+  - `os/live-build/config/includes.chroot/etc/calamares/branding/debian/branding.desc`
+
+Safe install-testing rule:
+
+- Never point the installer at a host disk or any real user disk.
+- Only test installation with a newly created disposable VM disk.
+- If launcher visibility or installer opening is not directly proven in the live session, stop before attaching any test disk.
+
+Current Phase 4 verification note:
+
+- See `docs/verification/phase-4-installer-integration.md` for the current partial verification result and evidence files.
 
 ## Cleanup
 

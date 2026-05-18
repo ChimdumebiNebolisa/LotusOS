@@ -56,12 +56,13 @@ Status: in progress.
 
 ## Phase 4: Installer Integration
 
-Status: planned.
+Status: partial verification.
 
 - Add Calamares package and config.
 - Add LotusOS installer branding.
 - Verify installation into a VM.
 - Document install limitations and recovery steps.
+- Current state: the ISO builds with Calamares integrated and the supported VirtualBox GUI path reaches a visible KDE plus Lotus Shell state, but the installer launcher and open flow are not yet directly re-proven on-screen.
 
 ## Phase 5: Niche Features
 

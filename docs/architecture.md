@@ -46,7 +46,9 @@ The remaining Phase 3C blocker is not Lotus Shell packaging. The unresolved issu
 
 Calamares is the intended graphical installer.
 
-The first live ISO may ship without a wired installer. LotusOS should not be described as installable until Calamares is configured, tested in a VM, and documented.
+The live image now wires Calamares through Debian's `calamares-settings-debian` package with minimal LotusOS overrides for branding, launcher text, and install confirmation behavior.
+
+LotusOS should still not be described as fully install-verified until the installer launcher and open flow are directly re-proven in a disposable VM install pass.
 
 ## Security And Privacy Guardrails
 
