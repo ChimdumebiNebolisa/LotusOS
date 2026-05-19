@@ -1,6 +1,6 @@
 # Phase 4: Installer Integration
 
-Status: partial success.
+Status: installer-open verified; install still untested.
 
 ## Purpose
 
@@ -88,30 +88,41 @@ Classification from the GUI run:
 - KDE/live session reached: yes
 - Lotus Shell still present: yes
 
+GUI follow-up proof on the same VM settings and existing ISO:
+
+- `20s`: graphical wallpaper state visible
+- `90s`: transient `vmwgfx` console text visible
+- `5m`: KDE panel and Lotus Shell visible
+- manual launch path used: KDE application launcher search for `install lotusos`
+
 ## Installer Launch Result
 
 - Installer packaging result: `verified`
 - Launcher file result: `verified from image contents`
-- Launcher visibly confirmed on-screen: `not directly proven`
-- Installer opens successfully: `not directly proven`
+- Launcher visibly confirmed on-screen: `verified`
+- Installer opens successfully: `verified`
+- Branding result: `LotusOS Installer` window title and `Welcome to the Calamares installer for LotusOS Preview`
+- Install started: `no`
+- Disk modified: `no`
 
-Reason:
+Proof path:
 
-- In the successful GUI run, Lotus Shell autostarted and remained visible through `10m`.
-- That made the live session usable enough to confirm KDE plus Lotus Shell, but the desktop area where the Calamares icon would normally appear was covered by the Lotus Shell window.
-- A low-risk attempt to reveal the desktop with VirtualBox keyboard automation did not change the visible state.
-- Because direct launcher visibility and direct Calamares open were not re-proven on-screen, this phase remains partial rather than full success.
+- Lotus Shell autostarted and covered the desktop, so the KDE application launcher was opened from the panel in the live session.
+- Searching for `install lotusos` showed the `Install LotusOS` launcher on-screen.
+- Selecting that launcher opened the Calamares welcome window in the live session.
+- No disposable install disk was attached, so Calamares later reported that installation could not continue and that there were no partitions to install on.
+- That warning was treated as confirmation that no install target was presented, not as an installer-open failure.
 
 ## Install Test Result
 
 - Attempted: `no`
-- Reason: the installer launcher and open flow were not directly re-proven in the guest, so no disposable install disk was attached.
+- Reason: this pass only verified that Calamares opens in the live session. No disposable install disk was attached, and no install was attempted.
 
 ## Known Caveats
 
 - The existing VirtualBox live-session caveat from Phase 3C still applies.
 - The headless VirtualBox frontend fell back into a `vmwgfx` console path even with `VMSVGA` plus 3D `on`.
-- The GUI frontend was materially better and stayed visibly usable through `10m`, but direct installer-launch proof is still missing.
+- The GUI frontend was materially better and reached a usable live session again, but timed screenshots still showed an intermittent transient `vmwgfx` console frame before the `5m` live-session state.
 
 ## Safe Install Warning
 
@@ -137,19 +148,29 @@ Reason:
 - `artifacts/vm-verification/phase4-live-gui-post-altf4.png`
 - `artifacts/vm-verification/phase4-live-gui-post-minimize-attempt1.png`
 - `artifacts/vm-verification/phase4-live-gui-post-minimize-attempt2.png`
+- `artifacts/vm-verification/phase4-installer-open-20s.png`
+- `artifacts/vm-verification/phase4-installer-open-90s.png`
+- `artifacts/vm-verification/phase4-installer-open-5m.png`
+- `artifacts/vm-verification/phase4-installer-open-launcher.png`
+- `artifacts/vm-verification/phase4-installer-open-search.png`
+- `artifacts/vm-verification/phase4-installer-open.png`
+- `artifacts/vm-verification/phase4-installer-post-close.png`
 
 ## Result
 
-Phase 4 is a `partial success`.
+Phase 4 is `installer-open verified`.
 
 What is proven:
 
 - Calamares is integrated into the ISO with tracked LotusOS overrides.
 - The ISO rebuild succeeds.
-- The GUI VirtualBox path still reaches a visible KDE plus Lotus Shell state through `10m`.
+- The GUI VirtualBox path still reaches a visible KDE plus Lotus Shell state.
+- The KDE application launcher can be opened in the live session even with Lotus Shell covering the desktop.
+- The `Install LotusOS` launcher appears on-screen and opens Calamares.
+- Calamares opens to a LotusOS-branded welcome window without any disposable install disk attached.
 
 What is not yet proven:
 
-- direct on-screen visibility of the installer launcher
-- direct successful opening of Calamares from the live session
 - any safe disposable-disk install run
+
+Phase 4 should still not be treated as complete until a disposable-disk install run is explicitly approved and verified.
