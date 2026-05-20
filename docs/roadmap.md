@@ -1,140 +1,111 @@
 # LotusOS Roadmap
 
+## Verified milestone state
+
+- Phase 4 installer integration: `verified`
+- Phase 5E live-shell verification: `verified`
+- Phase 5F installed-shell verification: `manually verified after a Codex automation attempt was blocked by a live-session lock`
+- Phase 6 identity polish: `implemented and locally verified`
+- Phase 7 local app launcher surface: `implemented and locally verified`
+- Phase 8 local resource hub: `implemented and locally verified`
+- Phase 9 release hygiene: `completed in this preview closeout pass`
+
 ## Phase 0: Repo Audit And Project Direction
 
-Status: scaffolded.
-
-- Inspect repository state.
-- Confirm whether existing code is OS build system, Lotus Shell, or unrelated.
-- Define product niche and MVP boundary.
-- Add vision, architecture, roadmap, build, decisions, and verification docs.
+Status: completed.
 
 ## Phase 1: OS Build Scaffold
 
-Status: scaffolded, not verified as a successful build.
-
-- Add `os/` structure.
-- Add Debian `live-build` scaffold.
-- Add package list drafts.
-- Add branding placeholder paths.
-- Add safe build, test, and clean scripts.
-- Document WSL/Linux build host requirements.
+Status: completed.
 
 ## Phase 2: First Bootable Live ISO
 
 Status: verified.
 
-- Configure live-build until an ISO is produced.
-- Boot the ISO in QEMU.
-- Verify KDE Plasma desktop session.
-- Verify network tooling.
-- Verify LotusOS branding where configured.
-- Record results in `docs/verification/`.
-
 ## Phase 3: Lotus Shell Packaging
 
-Status: verified through live-image packaging and prior visible-launch verification.
-
-- Create or import the Tauri + React + TypeScript + Rust Lotus Shell app.
-- Add Home, Projects, Notes, Files, AI Hub placeholder, and Settings placeholder screens.
-- Package or copy Lotus Shell into the live image.
-- Add a desktop launcher.
-- Verify Lotus Shell opens in the live session.
+Status: verified.
 
 ## Phase 3C: Live Boot And Desktop Polish
 
-Status: in progress.
+Status: verified with ongoing VirtualBox caveats.
 
-- Keep the existing Debian `live-build` and Lotus Shell packaging path.
-- Polish GRUB wording and reduce unattended boot delay.
-- Make Lotus Shell autostart failures visible and logged without blocking KDE.
-- Rebuild the ISO once.
-- Verify the primary VirtualBox path with `VMSVGA` and 3D acceleration `on`.
-- Document the `VMSVGA` plus 3D `off` `vmwgfx` caveat and any remaining desktop-state gaps.
-- Do not mark complete until the supported `VMSVGA` plus 3D `on` path remains visibly stable through the acceptance window.
-- Current blocker: VirtualBox graphics and session stability still degrade the live session after Lotus Shell becomes visible.
+- The supported `VMSVGA` + 3D `on` lane reaches KDE and Lotus Shell.
+- VirtualBox graphics and session instability still appears in some timed runs and remains a documented limitation rather than a packaging blocker.
 
 ## Phase 4: Installer Integration
 
-Status: verified on the disposable VDI install path.
+Status: verified.
 
-- Add Calamares package and config.
-- Add LotusOS installer branding.
-- Verify installation into a VM.
-- Document install limitations and recovery steps.
-- Current state: Calamares opens, a disposable VDI install completes, the installed VDI boots, the SDDM greeter appears, Plasma loads, and Lotus Shell autostarts in the installed system.
+- Calamares opens from the live session.
+- Disposable VDI install flow is verified.
+- Installed boot reaches SDDM, Plasma, and Lotus Shell.
 
 ## Phase 5A: Lotus Shell Home Polish
 
-Status: verified locally in the shell app only.
-
-- Keep Phase 5A limited to the Lotus Shell `Home` surface.
-- Replace the generic scaffold-style home screen with a dedicated first-run dashboard.
-- Keep Projects, Notes, Files, AI Hub, and Settings as placeholder-only surfaces.
-- Verify static in-app navigation, placeholder labeling, and frontend build output.
+Status: implemented and locally verified.
 
 ## Phase 5B: Lotus Shell System Snapshot
 
-Status: implemented and verified locally in the shell app.
-
-- Read-only local system snapshot with browser-safe preview fallback.
-- Home shows session context and badges.
-- Settings shows a read-only local system overview.
+Status: implemented and locally verified.
 
 ## Phase 5C: Tauri Packaging Cleanup
 
 Status: verified locally on Windows.
 
-- Added the required Windows `icon.ico` asset.
-- `cargo check` and `npm run tauri build -- --no-bundle` pass on the supported Windows host.
-
-See `docs/verification/phase-5c-tauri-packaging.md`.
-
 ## Phase 5D: Rebuilt ISO Packaging
 
-Status: verified (image content).
+Status: verified.
 
-- Rebuilt `artifacts/lotusos-amd64.iso` with the current Lotus Shell binary.
-- See `docs/verification/phase-5d-iso-rebuild.md`.
+- `artifacts/lotusos-amd64.iso` was rebuilt with the current Lotus Shell binary.
 
-## Phase 5E And 5F: VM Verification
+## Phase 5E: Live ISO Shell Verification
 
-Status: planned.
+Status: verified.
 
-- Verify updated shell surfaces in the live session (5E).
-- Verify updated shell surfaces after disposable install (5F).
+- Rebuilt ISO boots.
+- KDE/live session reaches desktop.
+- Lotus Shell autostarts.
+- Updated Home and read-only Settings surfaces appear.
+
+## Phase 5F: Installed System Shell Verification
+
+Status: manually verified.
+
+- Automated Calamares navigation was blocked when the live session locked.
+- Manual follow-up verification completed the missing install, boot, greeter, login, Plasma, and Lotus Shell checks on the rebuilt ISO.
+- This phase is intentionally recorded as manually verified, not fully automated.
 
 ## Phase 6: OS Identity Polish
 
-Status: implemented locally.
-
-- LotusOS-facing naming in shell copy, Tauri window title, packaged release metadata, and desktop launcher/icon path.
+Status: implemented and locally verified.
 
 ## Phase 7: Local App Launcher Surface
 
-Status: implemented and verified locally.
-
-- Allowlisted launchers for already-installed local tools only.
-- Installer visibility gated by live-session snapshot context.
+Status: implemented and locally verified.
 
 ## Phase 8: Local Resource Hub
 
-Status: implemented and verified locally.
-
-- Bounded local resource cards for Projects, Notes, and Files.
-- No cloud sync, auth, or database layer.
+Status: implemented and locally verified.
 
 ## Phase 9: Release Hygiene
 
-Status: planned after Phase 5D through 5F image verification.
+Status: completed.
 
-- Reconcile README, architecture, build, roadmap, and master plan with verified state.
-- Add preview release checklist and explicit known limitations.
+- README, roadmap, architecture, build notes, master plan, verification notes, and release notes are reconciled with the verified preview state.
+- Curated README screenshots are copied from tracked local VM evidence only.
+
+## Known limitations
+
+- VirtualBox graphics and session instability remains a documented caveat.
+- Hardware installation is not verified.
+- LotusOS is not production-ready.
+- ISO, VDI, and VM log artifacts remain out of git.
 
 ## Later
 
 - Local search.
-- Git/repository launcher depth.
-- Study workspace.
-- PDF/document workflow depth.
-- AI Hub integrations.
+- Deeper repository and project-launch workflows.
+- Study workspace expansion.
+- PDF and document workflow depth.
+- AI Hub integrations beyond the current placeholder/local-first stance.
