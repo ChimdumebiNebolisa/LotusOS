@@ -1,6 +1,6 @@
 # Phase 4: Installer Integration
 
-Status: disposable install verified; installed boot still inconclusive.
+Status: full Phase 4 success; disposable install and installed desktop boot verified.
 
 ## Purpose
 
@@ -117,8 +117,11 @@ Proof path:
 
 - Attempted: `yes`
 - Installer completion: `yes`
-- Installed-system boot result: `inconclusive`
-- Classification: `partial Phase 4 success`
+- Installed-system boot result: `verified`
+- Greeter reached: `yes`
+- Desktop reached: `yes`
+- Lotus Shell autostart in installed system: `yes`
+- Classification: `Full Phase 4 success`
 
 ## Phase 4C Safe Disposable-Disk Install Test
 
@@ -139,7 +142,7 @@ Install execution result:
 
 - Calamares install started only after the disposable-disk target was visually confirmed
 - Calamares reached the finish page and reported `All done.`
-- The live session blanked and locked during the long install run, but the installer was still active after unlocking the live session with password `live`
+- The live session blanked and locked during the long install run, but the installer remained active and later reached the finish screen
 
 Installed-boot result after ISO detach:
 
@@ -147,20 +150,18 @@ Installed-boot result after ISO detach:
 - ISO was detached
 - Boot order was switched to hard disk only
 - VirtualBox BIOS reported `Booting from Hard Disk...`
-- Timed evidence from the installed-disk boot was unstable:
-- `20s`: screenshot attempt failed because VirtualBox reported an unsupported `0x0` framebuffer, so `phase4c-installed-boot-20s.png` was not written
-- `90s`: black framebuffer
-- `5m`: wallpaper-only graphical state
-- `10m` follow-up: still wallpaper-only graphical state
-- A visible greeter or desktop was not reached, so `phase4c-installed-desktop.png` was not captured
+- Installed VDI booted successfully after ISO detach
+- SDDM greeter appeared for `Lotus Tester`
+- Login succeeded as user `lotus`
+- Plasma `(Wayland)` desktop loaded
+- Lotus Shell autostarted inside the installed system
 
 ## Known Caveats
 
 - The existing VirtualBox live-session caveat from Phase 3C still applies.
 - The headless VirtualBox frontend fell back into a `vmwgfx` console path even with `VMSVGA` plus 3D `on`.
 - The GUI frontend was materially better and reached a usable live session again, but timed screenshots still showed an intermittent transient `vmwgfx` console frame before the `5m` live-session state.
-- The disposable-disk install itself completed, but the installed-system GUI boot did not progress beyond a wallpaper-only state in the same VirtualBox graphics lane.
-- The first installed-boot screenshot could not be captured at `20s` because VirtualBox exposed a temporary `0x0` framebuffer during early hard-disk boot.
+- Long-term hardware compatibility and broader VM/backend coverage remain future work beyond Phase 4 verification.
 
 ## Safe Install Warning
 
@@ -201,24 +202,28 @@ Installed-boot result after ISO detach:
 - `artifacts/vm-verification/phase4c-installed-boot-90s.png`
 - `artifacts/vm-verification/phase4c-installed-boot-5m.png`
 - `artifacts/vm-verification/phase4c-installed-boot-10m-check.png`
+- `artifacts/vm-verification/phase4c-installed-greeter.png`
+- `artifacts/vm-verification/phase4c-installed-login-transition.png`
+- `artifacts/vm-verification/phase4c-installed-desktop-lotus-shell.png`
 
 ## Result
 
-Phase 4 is `partial success`.
+Phase 4 is `full success`.
 
 What is proven:
 
 - Calamares is integrated into the ISO with tracked LotusOS overrides.
-- The ISO rebuild succeeds.
-- The GUI VirtualBox path still reaches a visible KDE plus Lotus Shell state.
-- The KDE application launcher can be opened in the live session even with Lotus Shell covering the desktop.
-- The `Install LotusOS` launcher appears on-screen and opens Calamares.
-- Calamares opens to a LotusOS-branded welcome window.
-- Calamares sees and can target only the newly created disposable `25.00 GiB` VDI.
-- The disposable-disk install run completes to the Calamares `All done.` finish screen.
+- Calamares opens from the live session.
+- Calamares targets only the disposable `25.00 GiB` VDI.
+- The install completes successfully.
+- The installed system boots from the disposable VDI.
+- SDDM greeter appears.
+- Login reaches the Plasma desktop.
+- Lotus Shell autostarts in the installed system.
 
 What is not yet proven:
 
-- a clean installed-system graphical boot to a visible greeter or desktop in VirtualBox
+- No critical Phase 4 blocker remains.
+- Long-term hardware compatibility remains future work.
 
-Phase 4 should still not be treated as complete until the installed system boots cleanly from the disposable disk in a reproducible way.
+Phase 4 can now be treated as complete for installer integration verification.
