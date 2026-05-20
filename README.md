@@ -27,9 +27,11 @@ Current verification state:
 - Phase 3C implementation exists and Lotus Shell does appear under `VMSVGA` with 3D acceleration `on`, but the session later degrades to a black screen, so stable desktop acceptance is still not re-proven.
 - A follow-up live-session X11 anti-blanking and DPMS disable diagnostic did not prevent the later black-screen failure.
 - The remaining blocker is VirtualBox graphics and session stability, not Lotus Shell packaging.
-- Phase 4 installer integration now adds a Calamares-based installer path to the live image, but direct launcher visibility and installer-open proof are still only partially re-verified.
+- Phase 4 installer integration is verified: Calamares opens, disposable VDI install completes, installed boot reaches SDDM and Plasma, and Lotus Shell autostarts after installed login. See `docs/verification/phase-4-installer-integration.md`.
+- Phase 5A home polish, Phase 5B system snapshot, Phase 5C Tauri packaging cleanup, Phase 6 identity polish, Phase 7 local launchers, and Phase 8 local resource hub are implemented and verified locally in Lotus Shell.
+- `artifacts/lotusos-amd64.iso` was rebuilt on `2026-05-20` with the current Lotus Shell (see `docs/verification/phase-5d-iso-rebuild.md`). Phase 5E/5F VM verification is still outstanding.
 
-LotusOS now ships a wired Calamares installer path in the live ISO, but it should still be treated as partially verified until the installer launcher and open flow are directly re-proven in a disposable VM install pass.
+LotusOS still has a VirtualBox graphics/session stability caveat under the supported `VMSVGA` plus 3D `on` lane. Treat stable long-session desktop acceptance as not fully re-proven until fresh VM evidence is recorded for the rebuilt image.
 
 ## MVP Target
 

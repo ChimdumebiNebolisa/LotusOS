@@ -29,14 +29,12 @@ Lotus Shell lives under `shell/lotus-shell/`.
 
 The implementation track is Tauri + React + TypeScript + Rust. Its MVP screens are:
 
-- Home.
-- Projects.
-- Notes.
-- Files.
+- Home with read-only session context.
+- Projects, Notes, and Files with bounded local resource cards.
 - AI Hub placeholder.
-- Settings placeholder.
+- Settings with read-only local system overview.
 
-Real AI integration is planned after boot and install reliability. The AI Hub must not ship with bundled API keys or cloud-only assumptions.
+Local launcher and resource surfaces are allowlisted and local-only. Real AI integration is planned after boot and install reliability. The AI Hub must not ship with bundled API keys or cloud-only assumptions.
 
 The live image currently packages the Lotus Shell Linux binary into `/opt/lotus-shell/lotus-shell`, installs a desktop launcher, and uses an XDG autostart wrapper so the KDE live session can either launch Lotus Shell or record a visible/logged startup failure.
 
@@ -48,7 +46,7 @@ Calamares is the intended graphical installer.
 
 The live image now wires Calamares through Debian's `calamares-settings-debian` package with minimal LotusOS overrides for branding, launcher text, and install confirmation behavior.
 
-LotusOS should still not be described as fully install-verified until the installer launcher and open flow are directly re-proven in a disposable VM install pass.
+Phase 4 install verification is recorded in `docs/verification/phase-4-installer-integration.md`. The remaining image-level gap is rebuilding the ISO with the current Lotus Shell and re-verifying live and installed sessions after that rebuild.
 
 ## Security And Privacy Guardrails
 

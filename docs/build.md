@@ -41,6 +41,12 @@ From the repository root:
 bash os/scripts/build-iso.sh
 ```
 
+WSL root build with a user `rustup` toolchain (replace `<user>`):
+
+```bash
+wsl.exe -u root -- /usr/bin/bash -c 'export CARGO_HOME=/home/<user>/.cargo RUSTUP_HOME=/home/<user>/.rustup PATH="/home/<user>/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; cd /mnt/c/Users/Chimdumebi/LotusOS && bash os/scripts/build-iso.sh'
+```
+
 Expected result after Phase 2 is complete:
 
 - A Debian live-build run starts under `os/live-build/`.
@@ -125,9 +131,24 @@ Safe install-testing rule:
 - Only test installation with a newly created disposable VM disk.
 - If launcher visibility or installer opening is not directly proven in the live session, stop before attaching any test disk.
 
-Current Phase 4 verification note:
+Phase 4 verification note:
 
-- See `docs/verification/phase-4-installer-integration.md` for the current partial verification result and evidence files.
+- See `docs/verification/phase-4-installer-integration.md` for the verified disposable install flow and evidence files.
+
+Phase 5C verification note:
+
+- See `docs/verification/phase-5c-tauri-packaging.md` for the Windows Tauri packaging cleanup result.
+
+ISO content check after a rebuild:
+
+```bash
+wsl.exe -u root -- /usr/bin/bash os/scripts/verify-iso-contents.sh
+```
+
+Current packaging gap:
+
+- Phase 5D rebuild is complete; Phase 5E/5F still need live and installed VM verification of the updated shell surfaces.
+- When running the ISO build as WSL root, export the user `rustup` home directories and `PATH`, for example `CARGO_HOME=/home/<user>/.cargo`, `RUSTUP_HOME=/home/<user>/.rustup`, and `PATH="/home/<user>/.cargo/bin:..."`, so `cargo`/`rustc` meet the `>= 1.85.0` guard in `os/scripts/build-iso.sh`.
 
 ## Cleanup
 

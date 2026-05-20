@@ -73,15 +73,68 @@ Status: verified locally in the shell app only.
 - Keep Projects, Notes, Files, AI Hub, and Settings as placeholder-only surfaces.
 - Verify static in-app navigation, placeholder labeling, and frontend build output.
 
-## Phase 5B And Later
+## Phase 5B: Lotus Shell System Snapshot
 
-Status: planned after Phase 5A home polish.
+Status: implemented and verified locally in the shell app.
 
-- Project dashboard depth.
-- Notes and resource hub implementation.
-- Local file/project organization.
+- Read-only local system snapshot with browser-safe preview fallback.
+- Home shows session context and badges.
+- Settings shows a read-only local system overview.
+
+## Phase 5C: Tauri Packaging Cleanup
+
+Status: verified locally on Windows.
+
+- Added the required Windows `icon.ico` asset.
+- `cargo check` and `npm run tauri build -- --no-bundle` pass on the supported Windows host.
+
+See `docs/verification/phase-5c-tauri-packaging.md`.
+
+## Phase 5D: Rebuilt ISO Packaging
+
+Status: verified (image content).
+
+- Rebuilt `artifacts/lotusos-amd64.iso` with the current Lotus Shell binary.
+- See `docs/verification/phase-5d-iso-rebuild.md`.
+
+## Phase 5E And 5F: VM Verification
+
+Status: planned.
+
+- Verify updated shell surfaces in the live session (5E).
+- Verify updated shell surfaces after disposable install (5F).
+
+## Phase 6: OS Identity Polish
+
+Status: implemented locally.
+
+- LotusOS-facing naming in shell copy, Tauri window title, packaged release metadata, and desktop launcher/icon path.
+
+## Phase 7: Local App Launcher Surface
+
+Status: implemented and verified locally.
+
+- Allowlisted launchers for already-installed local tools only.
+- Installer visibility gated by live-session snapshot context.
+
+## Phase 8: Local Resource Hub
+
+Status: implemented and verified locally.
+
+- Bounded local resource cards for Projects, Notes, and Files.
+- No cloud sync, auth, or database layer.
+
+## Phase 9: Release Hygiene
+
+Status: planned after Phase 5D through 5F image verification.
+
+- Reconcile README, architecture, build, roadmap, and master plan with verified state.
+- Add preview release checklist and explicit known limitations.
+
+## Later
+
 - Local search.
-- Git/repository launcher.
+- Git/repository launcher depth.
 - Study workspace.
-- PDF/document workflow.
+- PDF/document workflow depth.
 - AI Hub integrations.

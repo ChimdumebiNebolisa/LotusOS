@@ -12,20 +12,16 @@
 - The Plasma desktop loads after installed login.
 - Lotus Shell autostarts after installed login.
 - Phase 5A is implemented and locally verified in the shell app: Home is polished, navigation works, and placeholder sections remain placeholder-only.
-- Phase 5B is implemented locally: the shell loads a read-only local system snapshot with a browser-safe fallback, Home shows real session context and badges, Settings shows a read-only local system overview, `npm run build` passes, and `cargo check` is currently blocked only by the Windows icon prerequisite unless a later rerun disproves that.
+- Phase 5B is implemented and verified locally: read-only system snapshot, Home session context, Settings system overview.
+- Phase 5C is verified locally on Windows: `icon.ico` added; `cargo check` and `npm run tauri build -- --no-bundle` pass. See `docs/verification/phase-5c-tauri-packaging.md`.
+- Phase 6 identity polish, Phase 7 allowlisted local launchers, and Phase 8 local resource hub are implemented and verified locally in the shell app.
 
 ## Current Known Blockers
 
 - VirtualBox graphics/session instability remains the main OS-level caveat. The supported `VMSVGA + 3D on` lane can reach Lotus Shell and still degrade to a black screen later in the observation window.
-- Tauri Windows build prerequisite is still incomplete: `shell/lotus-shell/src-tauri/icons/icon.ico` is missing, and that blocks `cargo check` during the Windows resource step.
-- Phase 5B has not yet been verified inside a rebuilt ISO or an installed VM flow.
-- Documentation drift still exists:
-- `README.md` still understates Phase 4 as partial even though `docs/verification/phase-4-installer-integration.md` records full success.
-- `docs/architecture.md` still understates Phase 4 as partial.
-- `docs/build.md` still points readers at a partial Phase 4 state.
-- `docs/roadmap.md` still says Phase 5B and later are only planned even though Phase 5B is now in the shell codebase.
-- `docs/verification/phase-2-first-iso-build.md` remains a partial Phase 2 note and is not a clean summary of the later verified live-boot state.
-- Packaging/rebuild verification gap remains: the updated Phase 5A/5B shell has not yet been repackaged into the ISO and re-verified in live and installed paths.
+- Image-level VM verification gap: Phase 5D rebuilt `artifacts/lotusos-amd64.iso` with the current Lotus Shell binary, but Phases 5E and 5F still need live-session and installed-system proof.
+- WSL ISO builds run as root must export the user `rustup` homes and toolchain on `PATH` (`CARGO_HOME`, `RUSTUP_HOME`, and `/home/<user>/.cargo/bin`); otherwise root sees no default toolchain or distro `cargo`/`rustc` below the `>= 1.85.0` guard.
+- Phase 9 release hygiene is in progress: README, roadmap, architecture, build notes, and this master plan are being reconciled with the verified local shell work while ISO/VM evidence is still outstanding.
 
 ## Project Direction
 
@@ -289,12 +285,12 @@ Acceptance criteria:
 | Phase 3C live-session caveat | Supported VirtualBox GUI lane with timed observation | Lotus Shell can appear, but session stability remains incomplete | `docs/verification/phase-3c-live-boot-polish.md` | Partial |
 | Phase 4 installer integration | Open Calamares, run disposable install, boot installed VDI | Installer opens, install completes, installed VDI boots into Plasma and Lotus Shell | `docs/verification/phase-4-installer-integration.md` | Verified |
 | Phase 5A home polish | `cd shell/lotus-shell && npm run build` and local Vite checks | Home polish renders and placeholder navigation works | `docs/verification/phase-5a-lotus-shell-home.md` | Verified locally |
-| Phase 5B system snapshot | `cd shell/lotus-shell && npm run build`; `cd src-tauri && cargo check` | Build passes; cargo is blocked only by missing Windows icon prerequisite | Local terminal output from `2026-05-20` | Verified locally with known blocker |
-| Phase 5C Tauri packaging cleanup | `cargo check`; `npm run tauri build -- --no-bundle` | Tauri packaging path is clean | `docs/verification/phase-5c-tauri-packaging.md` | Planned |
-| Phase 5D rebuilt ISO packaging | `bash os/scripts/build-iso.sh --check`; `sudo bash os/scripts/build-iso.sh` | Rebuilt ISO contains updated shell | `artifacts/vm-verification/phase5d-build-iso.log` | Planned |
+| Phase 5B system snapshot | `cd shell/lotus-shell && npm run build`; `cd src-tauri && cargo check` | Build passes; snapshot surfaces render locally | Local terminal output from `2026-05-20` | Verified locally |
+| Phase 5C Tauri packaging cleanup | `cargo check`; `npm run tauri build -- --no-bundle` | Tauri packaging path is clean | `docs/verification/phase-5c-tauri-packaging.md` | Verified locally |
+| Phase 5D rebuilt ISO packaging | `bash os/scripts/build-iso.sh --check`; WSL root build with user rustup on `PATH` | Rebuilt ISO contains updated shell | `docs/verification/phase-5d-iso-rebuild.md` | Verified (image content) |
 | Phase 5E live ISO verification | Boot rebuilt ISO in supported VirtualBox GUI lane | Updated Home and Settings appear in live session | `docs/verification/phase-5e-live-shell-verification.md` | Planned |
 | Phase 5F installed-system verification | Disposable install and installed login flow | Updated Lotus Shell appears after installed login | `docs/verification/phase-5f-installed-shell-verification.md` | Planned |
 
 ## Immediate Next Step
 
-Fix the Tauri Windows packaging prerequisite by adding the required icon asset and validating the full local Tauri build path before any ISO rebuild.
+Run Phase 5E live-session and Phase 5F installed-system VM verification against `artifacts/lotusos-amd64.iso`, then finish Phase 9 release hygiene once evidence is recorded.
