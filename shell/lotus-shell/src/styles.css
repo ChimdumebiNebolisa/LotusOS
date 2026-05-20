@@ -347,7 +347,8 @@ button {
 }
 
 .launcher-grid,
-.launcher-list {
+.launcher-list,
+.resource-grid {
   display: grid;
   gap: 0.8rem;
 }
@@ -357,7 +358,8 @@ button {
 }
 
 .launcher-card,
-.launcher-row {
+.launcher-row,
+.resource-card {
   border: 0;
   text-align: left;
   color: inherit;
@@ -374,6 +376,16 @@ button {
   padding: 1rem;
 }
 
+.resource-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.resource-card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+}
+
 .launcher-row {
   display: flex;
   align-items: center;
@@ -383,19 +395,22 @@ button {
 }
 
 .launcher-card:hover,
-.launcher-row:hover {
+.launcher-row:hover,
+.resource-card:hover {
   transform: translateY(-2px);
   background: rgba(255, 255, 255, 0.07);
 }
 
 .launcher-card.disabled,
-.launcher-row.disabled {
+.launcher-row.disabled,
+.resource-card.disabled {
   cursor: not-allowed;
   opacity: 0.62;
 }
 
 .launcher-card:disabled,
-.launcher-row:disabled {
+.launcher-row:disabled,
+.resource-card:disabled {
   cursor: not-allowed;
 }
 
@@ -414,6 +429,12 @@ button {
 .launcher-description {
   color: #d5e5f5;
   line-height: 1.5;
+}
+
+.resource-path {
+  color: #93bcdf;
+  font-size: 0.84rem;
+  word-break: break-word;
 }
 
 .launcher-chip {
@@ -471,6 +492,7 @@ button {
   .home-hero,
   .hero-actions,
   .launcher-grid,
+  .resource-grid,
   .destination-grid,
   .fact-grid,
   .fact-grid.compact {

@@ -45,12 +45,23 @@ type DetailItem = {
   value: string;
 };
 
+type ResourceStatus = "loading" | "ready" | "preview" | "error";
+
 type LocalApp = {
   id: string;
   label: string;
   description: string;
   available: boolean;
   visible: boolean;
+};
+
+type LocalResource = {
+  id: string;
+  sectionId: "projects" | "notes" | "files";
+  label: string;
+  description: string;
+  path: string;
+  exists: boolean;
 };
 
 const sections: Section[] = [
@@ -180,6 +191,81 @@ const browserPreviewApps: LocalApp[] = [
     description: "Available inside LotusOS Preview when Kate is present in the packaged session.",
     available: false,
     visible: true
+  }
+];
+
+const browserPreviewResources: LocalResource[] = [
+  {
+    id: "projects-home",
+    sectionId: "projects",
+    label: "Home Workspace",
+    description: "The packaged LotusOS session will expose the current user's home workspace here.",
+    path: "~/",
+    exists: true
+  },
+  {
+    id: "projects-projects",
+    sectionId: "projects",
+    label: "Projects",
+    description: "Conventional local project folder when one exists.",
+    path: "~/Projects",
+    exists: false
+  },
+  {
+    id: "projects-code",
+    sectionId: "projects",
+    label: "Code",
+    description: "Dedicated source folder when present.",
+    path: "~/Code",
+    exists: false
+  },
+  {
+    id: "notes-notes",
+    sectionId: "notes",
+    label: "Notes Folder",
+    description: "Local notes and drafts stay in the user's own files.",
+    path: "~/Notes",
+    exists: false
+  },
+  {
+    id: "notes-documents",
+    sectionId: "notes",
+    label: "Documents",
+    description: "Fallback location for reading and writing references.",
+    path: "~/Documents",
+    exists: true
+  },
+  {
+    id: "files-home",
+    sectionId: "files",
+    label: "Home",
+    description: "The current user's main local workspace.",
+    path: "~/",
+    exists: true
+  },
+  {
+    id: "files-desktop",
+    sectionId: "files",
+    label: "Desktop",
+    description: "Scratch files and quick desktop drops.",
+    path: "~/Desktop",
+    exists: true
+  },
+  {
+    id: "files-documents",
+    sectionId: "files",
+    label: "Documents",
+    description: "Longer-form references and working documents.",
+    path: "~/Documents",
+    exists: true
+  },
+  {
+    id: "files-downloads",
+    sectionId: "files",
+    label: "Downloads",
+    description: "Imported files and recent downloads.",
+    path: "~/Downloads",
+    exists: true
   }
 ];
 
@@ -357,6 +443,53 @@ const launcherCopy = (launcherStatus: LauncherStatus) => {
 
 const filterAppsByIds = (apps: LocalApp[], ids: string[]) =>
   ids.map((id) => apps.find((app) => app.id === id)).filter((app): app is LocalApp => Boolean(app));
+
+const loadLocalResources = async (): Promise<{ resources: LocalResource[]; status: ResourceStatus }> => {
+  if (!isTauri()) {
+    return { resources: browserPreviewResources, status: "preview" };
+  }
+
+  try {
+    const resources = await invoke<LocalResource[]>("get_local_resources");
+
+    return {
+      resources,
+      status: "ready"
+    };
+  } catch (error) {
+    console.error("Failed to load local resources", error);
+
+    return {
+      resources: browserPreviewResources,
+      status: "error"
+    };
+  }
+};
+
+const openLocalResource = async (resourceId: string) => {
+  await invoke("open_local_resource", { resourceId });
+};
+
+const formatResourceStatus = (resourceStatus: ResourceStatus) => {
+  if (resourceStatus === "ready") {
+    return "Local resources loaded";
+  }
+
+  if (resourceStatus === "preview") {
+    return "Preview resource list";
+  }
+
+  if (resourceStatus === "error") {
+    return "Resource fallback";
+  }
+
+  return "Loading resources";
+};
+
+const filterResourcesBySection = (
+  resources: LocalResource[],
+  sectionId: LocalResource["sectionId"]
+) => resources.filter((resource) => resource.sectionId === sectionId);
 
 type HomeDashboardProps = {
   snapshot: SystemSnapshot;
@@ -596,6 +729,130 @@ const PlaceholderSection = ({
   );
 };
 
+type ResourceSectionProps = {
+  section: Section;
+  resources: LocalResource[];
+  resourceStatus: ResourceStatus;
+  resourceMessage: string | null;
+  openingResourceId: string | null;
+  apps: LocalApp[];
+  launcherStatus: LauncherStatus;
+  launchMessage: string | null;
+  launchingAppId: string | null;
+  onOpenResource: (resourceId: string) => void;
+  onLaunch: (appId: string) => void;
+};
+
+const ResourceSection = ({
+  section,
+  resources,
+  resourceStatus,
+  resourceMessage,
+  openingResourceId,
+  apps,
+  launcherStatus,
+  launchMessage,
+  launchingAppId,
+  onOpenResource,
+  onLaunch
+}: ResourceSectionProps) => {
+  const relatedApps = filterAppsByIds(apps, sectionLaunchers[section.id as Exclude<SectionId, "home" | "settings">] ?? []);
+
+  return (
+    <>
+      <header className="hero">
+        <p className="eyebrow">{section.eyebrow}</p>
+        <h2>{section.title}</h2>
+        <p className="description">{section.description}</p>
+        <p className="panel-note">These cards only reflect local paths and launcher actions. There is still no cloud sync or hidden database.</p>
+      </header>
+
+      <section className="grid">
+        <article className="panel panel-wide">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Local Resources</p>
+              <h3>Useful paths without pretending there is a workspace backend.</h3>
+            </div>
+            <p className="panel-copy">{formatResourceStatus(resourceStatus)}</p>
+          </div>
+
+          <div className="launch-status-row compact">
+            <span className="status-badge subtle">{formatResourceStatus(resourceStatus)}</span>
+            {resourceMessage ? <span className="launch-feedback">{resourceMessage}</span> : null}
+          </div>
+
+          <div className="resource-grid">
+            {resources.map((resource) => (
+              <button
+                key={resource.id}
+                type="button"
+                className={resource.exists ? "resource-card" : "resource-card disabled"}
+                onClick={() => onOpenResource(resource.id)}
+                disabled={!resource.exists || openingResourceId === resource.id}
+              >
+                <span className="launcher-title-row">
+                  <span className="launcher-title">{resource.label}</span>
+                  <span className={resource.exists ? "launcher-chip" : "launcher-chip muted"}>
+                    {resource.exists ? "Open" : "Missing"}
+                  </span>
+                </span>
+                <span className="launcher-description">{resource.description}</span>
+                <span className="resource-path">{resource.path}</span>
+              </button>
+            ))}
+          </div>
+        </article>
+
+        <article className="panel accent-panel">
+          <h3>What stays out of scope</h3>
+          <ul className="list">
+            <li>No repo indexing or background scanning.</li>
+            <li>No note database or sync layer.</li>
+            <li>No hidden metadata beyond fixed local paths.</li>
+          </ul>
+        </article>
+
+        <article className="panel">
+          <h3>Related Tools</h3>
+          <div className="launch-status-row compact">
+            <span className="status-badge subtle">{formatLauncherStatus(launcherStatus)}</span>
+            {launchMessage ? <span className="launch-feedback">{launchMessage}</span> : null}
+          </div>
+          <div className="launcher-list">
+            {relatedApps.map((app) => (
+              <button
+                key={app.id}
+                type="button"
+                className={app.available ? "launcher-row" : "launcher-row disabled"}
+                onClick={() => onLaunch(app.id)}
+                disabled={!app.available || launchingAppId === app.id}
+              >
+                <span className="launcher-row-copy">
+                  <span className="launcher-title">{app.label}</span>
+                  <span className="launcher-description">{app.description}</span>
+                </span>
+                <span className={app.available ? "launcher-chip" : "launcher-chip muted"}>
+                  {app.available ? "Open" : "Unavailable"}
+                </span>
+              </button>
+            ))}
+          </div>
+        </article>
+
+        <article className="panel">
+          <h3>Current Scope</h3>
+          <ul className="list">
+            {section.highlights.map((highlight) => (
+              <li key={highlight}>{highlight}</li>
+            ))}
+          </ul>
+        </article>
+      </section>
+    </>
+  );
+};
+
 type SettingsOverviewSectionProps = {
   section: Section;
   snapshot: SystemSnapshot;
@@ -676,13 +933,21 @@ const App = () => {
   const [launcherStatus, setLauncherStatus] = useState<LauncherStatus>("loading");
   const [launchMessage, setLaunchMessage] = useState<string | null>(null);
   const [launchingAppId, setLaunchingAppId] = useState<string | null>(null);
+  const [resources, setResources] = useState<LocalResource[]>(browserPreviewResources);
+  const [resourceStatus, setResourceStatus] = useState<ResourceStatus>("loading");
+  const [resourceMessage, setResourceMessage] = useState<string | null>(null);
+  const [openingResourceId, setOpeningResourceId] = useState<string | null>(null);
   const section = sections.find((item) => item.id === activeSection) ?? sections[0];
 
   useEffect(() => {
     let cancelled = false;
 
     const hydrateRuntime = async () => {
-      const [snapshotResult, appResult] = await Promise.all([loadSystemSnapshot(), loadLocalApps()]);
+      const [snapshotResult, appResult, resourceResult] = await Promise.all([
+        loadSystemSnapshot(),
+        loadLocalApps(),
+        loadLocalResources()
+      ]);
 
       if (cancelled) {
         return;
@@ -692,6 +957,8 @@ const App = () => {
       setSnapshotStatus(snapshotResult.status);
       setApps(appResult.apps.filter((app) => app.visible));
       setLauncherStatus(appResult.status);
+      setResources(resourceResult.resources);
+      setResourceStatus(resourceResult.status);
     };
 
     hydrateRuntime();
@@ -713,6 +980,21 @@ const App = () => {
       setLaunchMessage(message);
     } finally {
       setLaunchingAppId(null);
+    }
+  };
+
+  const handleOpenResource = async (resourceId: string) => {
+    setResourceMessage(null);
+    setOpeningResourceId(resourceId);
+
+    try {
+      await openLocalResource(resourceId);
+      setResourceMessage("Resource opened in the local file manager.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Resource open failed.";
+      setResourceMessage(message);
+    } finally {
+      setOpeningResourceId(null);
     }
   };
 
@@ -756,7 +1038,26 @@ const App = () => {
         {activeSection === "settings" ? (
           <SettingsOverviewSection section={section} snapshot={snapshot} snapshotStatus={snapshotStatus} />
         ) : null}
-        {activeSection !== "home" && activeSection !== "settings" ? (
+        {activeSection === "projects" || activeSection === "notes" || activeSection === "files" ? (
+          <ResourceSection
+            section={section}
+            resources={filterResourcesBySection(resources, activeSection)}
+            resourceStatus={resourceStatus}
+            resourceMessage={resourceMessage}
+            openingResourceId={openingResourceId}
+            apps={apps}
+            launcherStatus={launcherStatus}
+            launchMessage={launchMessage}
+            launchingAppId={launchingAppId}
+            onOpenResource={handleOpenResource}
+            onLaunch={handleLaunch}
+          />
+        ) : null}
+        {activeSection !== "home" &&
+        activeSection !== "settings" &&
+        activeSection !== "projects" &&
+        activeSection !== "notes" &&
+        activeSection !== "files" ? (
           <PlaceholderSection
             section={section}
             apps={apps}
