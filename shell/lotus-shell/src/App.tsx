@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { invoke, isTauri } from "@tauri-apps/api/core";
+import { useEffect, useState } from "react";
 
 type SectionId = "home" | "projects" | "notes" | "files" | "ai-hub" | "settings";
+type SnapshotStatus = "loading" | "ready" | "preview" | "error";
 
 type Section = {
   id: SectionId;
@@ -10,6 +12,7 @@ type Section = {
   description: string;
   actions: string[];
   highlights: string[];
+  statusLabel?: string;
 };
 
 type HomeAction = {
@@ -18,10 +21,27 @@ type HomeAction = {
   target: Exclude<SectionId, "home">;
 };
 
-type HomeCard = {
-  title: string;
-  description: string;
-  items: string[];
+type SystemSnapshot = {
+  lotusName: string;
+  lotusPrettyName: string;
+  lotusStage: string;
+  osName: string;
+  osPrettyName: string;
+  baseId: string;
+  versionCodename: string;
+  username: string;
+  hostname: string;
+  sessionMode: string;
+  sessionType: string;
+  currentDesktop: string;
+  desktopSession: string;
+  displayProtocol: string;
+  hasCalamaresLauncher: boolean;
+};
+
+type DetailItem = {
+  label: string;
+  value: string;
 };
 
 const sections: Section[] = [
@@ -33,7 +53,7 @@ const sections: Section[] = [
     description:
       "Lotus Shell is the workspace layer for study, coding, and project flow inside LotusOS.",
     actions: ["Resume current work", "Open recent project", "Review today"],
-    highlights: ["Live session ready", "KDE desktop running", "Phase 3 scaffold verified"]
+    highlights: ["Home dashboard ready", "Local-first shell", "Phase 5B system context"]
   },
   {
     id: "projects",
@@ -42,7 +62,8 @@ const sections: Section[] = [
     title: "Track active work without noise.",
     description: "This placeholder screen is reserved for repo launchers, task context, and active branches.",
     actions: ["Recent repositories", "Pinned workspaces", "Branch status"],
-    highlights: ["Minimal scaffold", "No background services", "Local-first"]
+    highlights: ["Minimal scaffold", "No background services", "Local-first"],
+    statusLabel: "Placeholder"
   },
   {
     id: "notes",
@@ -51,7 +72,8 @@ const sections: Section[] = [
     title: "Keep research and ideas nearby.",
     description: "This placeholder screen is reserved for note capture, reading queues, and lightweight study context.",
     actions: ["Daily notes", "Study queue", "Reference snippets"],
-    highlights: ["Placeholder only", "No sync required", "Offline-first direction"]
+    highlights: ["Placeholder only", "No sync required", "Offline-first direction"],
+    statusLabel: "Placeholder"
   },
   {
     id: "files",
@@ -60,7 +82,8 @@ const sections: Section[] = [
     title: "Surface working files, not clutter.",
     description: "This placeholder screen is reserved for project folders, recent downloads, and working sets.",
     actions: ["Project folders", "Recent files", "Pinned directories"],
-    highlights: ["KDE integration planned", "No custom file manager", "Focused workflow"]
+    highlights: ["KDE integration planned", "No custom file manager", "Focused workflow"],
+    statusLabel: "Placeholder"
   },
   {
     id: "ai-hub",
@@ -69,16 +92,18 @@ const sections: Section[] = [
     title: "Reserve the AI entry point without shipping credentials.",
     description: "This placeholder protects the local-first boundary until the OS boot/install path is stable.",
     actions: ["Model launchers", "Prompt workspace", "Offline tools"],
-    highlights: ["No API keys bundled", "No cloud account required", "Future phase"]
+    highlights: ["No API keys bundled", "No cloud account required", "Future phase"],
+    statusLabel: "Placeholder"
   },
   {
     id: "settings",
     label: "Settings",
     eyebrow: "Settings",
-    title: "Keep Lotus Shell configurable, not sprawling.",
-    description: "This placeholder screen is reserved for workspace preferences, startup behavior, and local tool paths.",
-    actions: ["Startup", "Workspace defaults", "Local integrations"],
-    highlights: ["Deliberately small", "Source-controlled scaffold", "Expandable later"]
+    title: "Read the current system, not a speculative config panel.",
+    description: "This surface shows a narrow local snapshot of the current LotusOS session without writing any preferences.",
+    actions: ["Release identity", "Session details", "Installer availability"],
+    highlights: ["Read-only overview", "No preferences stored", "Local-only snapshot"],
+    statusLabel: "Read-only"
   }
 ];
 
@@ -100,28 +125,146 @@ const homeActions: HomeAction[] = [
   }
 ];
 
-const homeCards: HomeCard[] = [
-  {
-    title: "What Lotus Shell is for",
-    description: "This surface should help a user orient quickly instead of dumping them into a bare scaffold.",
-    items: ["Study flow", "Coding sessions", "Local project organization"]
-  },
-  {
-    title: "Current shell state",
-    description: "This phase keeps the shell static and reliable while the broader OS path remains unchanged.",
-    items: ["Packaged into the ISO", "Autostart already verified", "No new services or backends"]
-  }
-];
+const browserPreviewSnapshot: SystemSnapshot = {
+  lotusName: "LotusOS",
+  lotusPrettyName: "Browser Preview",
+  lotusStage: "local-preview",
+  osName: "Unknown",
+  osPrettyName: "Unknown",
+  baseId: "Unknown",
+  versionCodename: "Unknown",
+  username: "Unknown",
+  hostname: "Unknown",
+  sessionMode: "preview",
+  sessionType: "Unknown",
+  currentDesktop: "Unknown",
+  desktopSession: "Unknown",
+  displayProtocol: "Unknown",
+  hasCalamaresLauncher: false
+};
 
-const placeholderSections = sections.filter(
+const destinationSections = sections.filter(
   (section): section is Section & { id: Exclude<SectionId, "home"> } => section.id !== "home"
 );
 
+const formatSessionMode = (sessionMode: string) => {
+  if (sessionMode === "live") {
+    return "Live session";
+  }
+
+  if (sessionMode === "installed") {
+    return "Installed system";
+  }
+
+  if (sessionMode === "preview") {
+    return "Browser preview";
+  }
+
+  return "Unknown session";
+};
+
+const formatSnapshotStatus = (snapshotStatus: SnapshotStatus) => {
+  if (snapshotStatus === "ready") {
+    return "Runtime snapshot";
+  }
+
+  if (snapshotStatus === "preview") {
+    return "Preview fallback";
+  }
+
+  if (snapshotStatus === "error") {
+    return "Fallback snapshot";
+  }
+
+  return "Loading snapshot";
+};
+
+const formatInstallerAvailability = (snapshot: SystemSnapshot) => {
+  if (!snapshot.hasCalamaresLauncher) {
+    return "Installer launcher not detected in this session.";
+  }
+
+  if (snapshot.sessionMode === "live") {
+    return "Installer launcher detected in the live session.";
+  }
+
+  if (snapshot.sessionMode === "installed") {
+    return "Installer launcher detected on this installed system.";
+  }
+
+  return "Installer availability can only be confirmed inside the Tauri runtime.";
+};
+
+const formatSnapshotDescription = (snapshot: SystemSnapshot, snapshotStatus: SnapshotStatus) => {
+  if (snapshotStatus === "loading") {
+    return "Lotus Shell is loading a local system snapshot so Home and Settings can reflect the current session truthfully.";
+  }
+
+  if (snapshotStatus === "ready") {
+    if (snapshot.sessionMode === "live") {
+      return "Lotus Shell can see a live LotusOS session, its current desktop context, and whether the installer surface is present.";
+    }
+
+    return "Lotus Shell can see an installed LotusOS session, its current desktop context, and a narrow set of local release details.";
+  }
+
+  return "Lotus Shell is running outside the packaged Tauri runtime, so the UI is showing a safe fallback snapshot instead of local OS data.";
+};
+
+const buildHomeFacts = (snapshot: SystemSnapshot): DetailItem[] => [
+  { label: "LotusOS identity", value: snapshot.lotusPrettyName },
+  { label: "Base system", value: snapshot.osPrettyName },
+  { label: "User and host", value: `${snapshot.username} @ ${snapshot.hostname}` },
+  { label: "Desktop context", value: `${snapshot.displayProtocol} / ${snapshot.sessionType}` }
+];
+
+const buildSettingsFacts = (snapshot: SystemSnapshot): DetailItem[] => [
+  { label: "LotusOS name", value: snapshot.lotusName },
+  { label: "LotusOS release", value: snapshot.lotusPrettyName },
+  { label: "LotusOS stage", value: snapshot.lotusStage },
+  { label: "Base OS", value: snapshot.osName },
+  { label: "Base release", value: snapshot.osPrettyName },
+  { label: "Version codename", value: snapshot.versionCodename },
+  { label: "Base ID", value: snapshot.baseId },
+  { label: "User", value: snapshot.username },
+  { label: "Hostname", value: snapshot.hostname },
+  { label: "Session mode", value: formatSessionMode(snapshot.sessionMode) },
+  { label: "Session type", value: snapshot.sessionType },
+  { label: "Display protocol", value: snapshot.displayProtocol },
+  { label: "Current desktop", value: snapshot.currentDesktop },
+  { label: "Desktop session", value: snapshot.desktopSession },
+  { label: "Calamares launcher", value: snapshot.hasCalamaresLauncher ? "Present" : "Not detected" }
+];
+
+const loadSystemSnapshot = async (): Promise<{ snapshot: SystemSnapshot; status: SnapshotStatus }> => {
+  if (!isTauri()) {
+    return { snapshot: browserPreviewSnapshot, status: "preview" };
+  }
+
+  try {
+    const snapshot = await invoke<SystemSnapshot>("get_system_snapshot");
+
+    return {
+      snapshot: {
+        ...browserPreviewSnapshot,
+        ...snapshot
+      },
+      status: "ready"
+    };
+  } catch (error) {
+    console.error("Failed to load system snapshot", error);
+
+    return { snapshot: browserPreviewSnapshot, status: "error" };
+  }
+};
+
 type HomeDashboardProps = {
+  snapshot: SystemSnapshot;
+  snapshotStatus: SnapshotStatus;
   onNavigate: (sectionId: Exclude<SectionId, "home">) => void;
 };
 
-const HomeDashboard = ({ onNavigate }: HomeDashboardProps) => {
+const HomeDashboard = ({ snapshot, snapshotStatus, onNavigate }: HomeDashboardProps) => {
   return (
     <div className="home-dashboard">
       <section className="home-hero">
@@ -129,8 +272,8 @@ const HomeDashboard = ({ onNavigate }: HomeDashboardProps) => {
           <p className="eyebrow">LotusOS Home</p>
           <h2>A calm first place to start.</h2>
           <p className="description">
-            Lotus Shell is the workspace layer inside LotusOS. Phase 5A turns Home into a real first-run surface with clear
-            next steps, while the rest of the shell stays intentionally lightweight.
+            Lotus Shell is the workspace layer inside LotusOS. Phase 5B keeps the shell narrow while making Home aware of
+            the local OS and session it is actually running inside.
           </p>
 
           <div className="hero-actions">
@@ -149,45 +292,69 @@ const HomeDashboard = ({ onNavigate }: HomeDashboardProps) => {
         </div>
 
         <article className="panel status-panel">
-          <p className="eyebrow">Shell Status</p>
-          <h3>Static, local, and ready to orient the session.</h3>
-          <p>
-            Lotus Shell remains a packaged app inside LotusOS. This pass only improves the first-run surface and does not
-            change install, boot, or backend behavior.
-          </p>
-          <ul className="list status-list">
-            <li>Home dashboard polish only</li>
-            <li>No external app launchers added</li>
-            <li>No dynamic system probing</li>
-          </ul>
+          <div className="status-header">
+            <p className="eyebrow">Shell Status</p>
+            <div className="badge-row">
+              <span className="status-badge">{formatSessionMode(snapshot.sessionMode)}</span>
+              <span className="status-badge subtle">{formatSnapshotStatus(snapshotStatus)}</span>
+            </div>
+          </div>
+
+          <h3>{snapshotStatus === "ready" ? "Local system context loaded." : "Local system context is limited."}</h3>
+          <p>{formatSnapshotDescription(snapshot, snapshotStatus)}</p>
+
+          <dl className="fact-grid compact">
+            {buildHomeFacts(snapshot).map((fact) => (
+              <div key={fact.label} className="fact">
+                <dt className="fact-label">{fact.label}</dt>
+                <dd className="fact-value">{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <p className="panel-note">{formatInstallerAvailability(snapshot)}</p>
         </article>
       </section>
 
       <section className="home-grid">
-        {homeCards.map((card) => (
-          <article key={card.title} className="panel">
-            <p className="eyebrow">Overview</p>
-            <h3>{card.title}</h3>
-            <p>{card.description}</p>
-            <ul className="list">
-              {card.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </article>
-        ))}
+        <article className="panel">
+          <p className="eyebrow">Overview</p>
+          <h3>What Lotus Shell is for</h3>
+          <p>This surface should orient the session quickly instead of dropping the user into a bare scaffold.</p>
+          <ul className="list">
+            <li>Study flow</li>
+            <li>Coding sessions</li>
+            <li>Local project organization</li>
+          </ul>
+        </article>
+
+        <article className="panel">
+          <p className="eyebrow">Runtime Context</p>
+          <h3>Home now reflects the current system truthfully.</h3>
+          <p>
+            This phase adds read-only session awareness only. It does not add persistence, app launching, installer changes,
+            or any remote dependency.
+          </p>
+          <ul className="list">
+            <li>Live vs installed awareness</li>
+            <li>Release and desktop context</li>
+            <li>Installer presence as data only</li>
+          </ul>
+        </article>
 
         <article className="panel panel-wide">
           <div className="panel-heading">
             <div>
               <p className="eyebrow">Next Destinations</p>
-              <h3>Placeholder sections remain visible, but Home leads the flow.</h3>
+              <h3>Placeholder sections stay narrow while Settings becomes a read-only overview.</h3>
             </div>
-            <p className="panel-copy">Everything below stays static and local. These links only switch sections inside Lotus Shell.</p>
+            <p className="panel-copy">
+              Navigation still stays inside Lotus Shell. No external launchers are added until a later phase.
+            </p>
           </div>
 
           <div className="destination-grid">
-            {placeholderSections.map((section) => (
+            {destinationSections.map((section) => (
               <button
                 key={section.id}
                 type="button"
@@ -196,7 +363,7 @@ const HomeDashboard = ({ onNavigate }: HomeDashboardProps) => {
               >
                 <span className="destination-topline">
                   <span className="eyebrow">{section.eyebrow}</span>
-                  <span className="placeholder-chip">Placeholder</span>
+                  {section.statusLabel ? <span className="placeholder-chip">{section.statusLabel}</span> : null}
                 </span>
                 <span className="destination-title">{section.label}</span>
                 <span className="destination-description">{section.description}</span>
@@ -235,7 +402,7 @@ const PlaceholderSection = ({ section }: PlaceholderSectionProps) => {
 
         <article className="panel accent-panel">
           <h3>Current State</h3>
-          <p>This placeholder section stays intentionally lightweight during Phase 5A while Home becomes the primary first-run surface.</p>
+          <p>This section stays intentionally lightweight during Phase 5B while the shell gains read-only session awareness.</p>
         </article>
 
         <article className="panel">
@@ -249,7 +416,79 @@ const PlaceholderSection = ({ section }: PlaceholderSectionProps) => {
 
         <article className="panel">
           <h3>Guardrails</h3>
-          <p>No backend, sync, or OS-level integrations are introduced in this placeholder during the Home polish pass.</p>
+          <p>No backend storage, sync, or tool launching is introduced in this placeholder during the system-context pass.</p>
+        </article>
+      </section>
+    </>
+  );
+};
+
+type SettingsOverviewSectionProps = {
+  section: Section;
+  snapshot: SystemSnapshot;
+  snapshotStatus: SnapshotStatus;
+};
+
+const SettingsOverviewSection = ({ section, snapshot, snapshotStatus }: SettingsOverviewSectionProps) => {
+  return (
+    <>
+      <header className="hero">
+        <div className="status-header">
+          <div>
+            <p className="eyebrow">{section.eyebrow}</p>
+            <h2>{section.title}</h2>
+          </div>
+          <div className="badge-row">
+            <span className="status-badge">{formatSessionMode(snapshot.sessionMode)}</span>
+            <span className="status-badge subtle">{section.statusLabel}</span>
+          </div>
+        </div>
+
+        <p className="description">{section.description}</p>
+        <p className="panel-note">{formatSnapshotDescription(snapshot, snapshotStatus)}</p>
+      </header>
+
+      <section className="grid">
+        <article className="panel panel-wide">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">System Snapshot</p>
+              <h3>Read-only local context</h3>
+            </div>
+            <p className="panel-copy">{formatSnapshotStatus(snapshotStatus)}</p>
+          </div>
+
+          <dl className="fact-grid">
+            {buildSettingsFacts(snapshot).map((fact) => (
+              <div key={fact.label} className="fact">
+                <dt className="fact-label">{fact.label}</dt>
+                <dd className="fact-value">{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </article>
+
+        <article className="panel accent-panel">
+          <h3>Session Notes</h3>
+          <ul className="list">
+            <li>{snapshot.sessionMode === "live" ? "This session appears to be running from live media." : "This session appears to be running from an installed system."}</li>
+            <li>{snapshot.currentDesktop === "Unknown" ? "Desktop metadata is limited in the current runtime." : `Current desktop reports as ${snapshot.currentDesktop}.`}</li>
+            <li>{snapshot.desktopSession === "Unknown" ? "Desktop session name is not exposed right now." : `Desktop session reports as ${snapshot.desktopSession}.`}</li>
+          </ul>
+        </article>
+
+        <article className="panel">
+          <h3>Installer Surface</h3>
+          <p>{formatInstallerAvailability(snapshot)}</p>
+        </article>
+
+        <article className="panel">
+          <h3>Guardrails</h3>
+          <ul className="list">
+            <li>This view does not store preferences.</li>
+            <li>This view does not launch external tools yet.</li>
+            <li>This view only reflects a narrow local snapshot.</li>
+          </ul>
         </article>
       </section>
     </>
@@ -258,7 +497,30 @@ const PlaceholderSection = ({ section }: PlaceholderSectionProps) => {
 
 const App = () => {
   const [activeSection, setActiveSection] = useState<SectionId>("home");
+  const [snapshot, setSnapshot] = useState<SystemSnapshot>(browserPreviewSnapshot);
+  const [snapshotStatus, setSnapshotStatus] = useState<SnapshotStatus>("loading");
   const section = sections.find((item) => item.id === activeSection) ?? sections[0];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const hydrateSnapshot = async () => {
+      const result = await loadSystemSnapshot();
+
+      if (cancelled) {
+        return;
+      }
+
+      setSnapshot(result.snapshot);
+      setSnapshotStatus(result.status);
+    };
+
+    hydrateSnapshot();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="app-shell">
@@ -267,7 +529,7 @@ const App = () => {
         <div className="brand-copy">
           <p className="eyebrow">LotusOS</p>
           <h1>Shell</h1>
-          <p className="caption">Phase 5A home dashboard</p>
+          <p className="caption">Phase 5B system context</p>
         </div>
 
         <nav className="nav">
@@ -285,7 +547,11 @@ const App = () => {
       </aside>
 
       <main className="workspace">
-        {activeSection === "home" ? <HomeDashboard onNavigate={setActiveSection} /> : <PlaceholderSection section={section} />}
+        {activeSection === "home" ? <HomeDashboard snapshot={snapshot} snapshotStatus={snapshotStatus} onNavigate={setActiveSection} /> : null}
+        {activeSection === "settings" ? (
+          <SettingsOverviewSection section={section} snapshot={snapshot} snapshotStatus={snapshotStatus} />
+        ) : null}
+        {activeSection !== "home" && activeSection !== "settings" ? <PlaceholderSection section={section} /> : null}
       </main>
     </div>
   );

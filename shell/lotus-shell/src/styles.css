@@ -133,7 +133,9 @@ button {
 .list,
 .panel-copy,
 .destination-description,
-.hero-action-copy {
+.hero-action-copy,
+.fact-value,
+.panel-note {
   margin: 0;
   color: #d5e5f5;
   line-height: 1.6;
@@ -219,6 +221,29 @@ button {
   background: linear-gradient(180deg, rgba(11, 36, 60, 0.92), rgba(8, 26, 44, 0.82));
 }
 
+.status-header,
+.badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.status-badge {
+  display: inline-flex;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #eef6ff;
+  font-size: 0.78rem;
+}
+
+.status-badge.subtle {
+  background: rgba(255, 255, 255, 0.06);
+  color: #c6daf0;
+}
+
 .status-list {
   display: grid;
   gap: 0.55rem;
@@ -268,6 +293,42 @@ button {
   padding-left: 1.15rem;
 }
 
+.fact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin: 0;
+}
+
+.fact-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fact {
+  padding: 0.9rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.fact-label {
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  color: #93bcdf;
+}
+
+.fact-value {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #f2f8ff;
+}
+
+.panel-note {
+  color: #bfd5eb;
+}
+
 .destination-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -307,7 +368,9 @@ button {
 @media (max-width: 1040px) {
   .home-hero,
   .hero-actions,
-  .destination-grid {
+  .destination-grid,
+  .fact-grid,
+  .fact-grid.compact {
     grid-template-columns: 1fr;
   }
 
