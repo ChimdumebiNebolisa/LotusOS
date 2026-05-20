@@ -1,7 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::Serialize;
-use std::{collections::HashMap, env, fs, path::Path};
+use std::{
+    collections::HashMap,
+    env, fs,
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+};
 
 const UNKNOWN_VALUE: &str = "Unknown";
 
@@ -25,37 +30,139 @@ struct SystemSnapshot {
     has_calamares_launcher: bool,
 }
 
+#[derive(Clone, Copy)]
+struct AppDefinition {
+    id: &'static str,
+    label: &'static str,
+    description: &'static str,
+    command_candidates: &'static [&'static str],
+    args: &'static [&'static str],
+    live_only: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct LocalApp {
+    id: String,
+    label: String,
+    description: String,
+    available: bool,
+    visible: bool,
+}
+
+const APP_DEFINITIONS: [AppDefinition; 7] = [
+    AppDefinition {
+        id: "terminal",
+        label: "Terminal",
+        description: "Open Konsole for shell access and local commands.",
+        command_candidates: &["konsole"],
+        args: &[],
+        live_only: false,
+    },
+    AppDefinition {
+        id: "files",
+        label: "Files",
+        description: "Open Dolphin to browse local folders and working files.",
+        command_candidates: &["dolphin"],
+        args: &[],
+        live_only: false,
+    },
+    AppDefinition {
+        id: "browser",
+        label: "Browser",
+        description: "Open Firefox ESR for local docs and web access.",
+        command_candidates: &["firefox-esr", "firefox"],
+        args: &[],
+        live_only: false,
+    },
+    AppDefinition {
+        id: "editor",
+        label: "Editor",
+        description: "Open Kate for notes, configs, and local editing.",
+        command_candidates: &["kate"],
+        args: &[],
+        live_only: false,
+    },
+    AppDefinition {
+        id: "pdf",
+        label: "PDF",
+        description: "Open Okular for PDFs and reference documents.",
+        command_candidates: &["okular"],
+        args: &[],
+        live_only: false,
+    },
+    AppDefinition {
+        id: "office",
+        label: "Office",
+        description: "Open LibreOffice for documents, sheets, and slides.",
+        command_candidates: &["libreoffice"],
+        args: &[],
+        live_only: false,
+    },
+    AppDefinition {
+        id: "installer",
+        label: "Install LotusOS",
+        description: "Open the Calamares installer when this is a live session.",
+        command_candidates: &["calamares-install-debian"],
+        args: &[],
+        live_only: true,
+    },
+];
+
 #[tauri::command]
 fn get_system_snapshot() -> SystemSnapshot {
-    let lotus_release = parse_release_file("/etc/lotusos-release");
-    let os_release = parse_release_file("/etc/os-release");
-    let is_live_session = detect_live_session();
+    system_snapshot()
+}
 
-    SystemSnapshot {
-        lotus_name: release_value(&lotus_release, "NAME"),
-        lotus_pretty_name: release_value(&lotus_release, "PRETTY_NAME"),
-        lotus_stage: release_value(&lotus_release, "LOTUSOS_STAGE"),
-        os_name: release_value(&os_release, "NAME"),
-        os_pretty_name: release_value(&os_release, "PRETTY_NAME"),
-        base_id: first_non_empty([
-            lotus_release.get("BASE_ID").map(String::as_str),
-            os_release.get("ID").map(String::as_str),
-        ]),
-        version_codename: release_value(&os_release, "VERSION_CODENAME"),
-        username: username(),
-        hostname: hostname(),
-        session_mode: if is_live_session {
-            "live".to_string()
-        } else {
-            "installed".to_string()
-        },
-        session_type: env_value("XDG_SESSION_TYPE"),
-        current_desktop: env_value("XDG_CURRENT_DESKTOP"),
-        desktop_session: env_value("DESKTOP_SESSION"),
-        display_protocol: display_protocol(),
-        has_calamares_launcher: Path::new("/usr/share/applications/calamares-install-debian.desktop")
-            .exists(),
+#[tauri::command]
+fn get_local_apps() -> Vec<LocalApp> {
+    let snapshot = system_snapshot();
+
+    APP_DEFINITIONS
+        .iter()
+        .filter_map(|definition| {
+            let visible = !definition.live_only
+                || (snapshot.session_mode == "live" && snapshot.has_calamares_launcher);
+
+            if !visible {
+                return None;
+            }
+
+            Some(LocalApp {
+                id: definition.id.to_string(),
+                label: definition.label.to_string(),
+                description: definition.description.to_string(),
+                available: resolve_command(definition.command_candidates).is_some(),
+                visible,
+            })
+        })
+        .collect()
+}
+
+#[tauri::command]
+fn launch_local_app(app_id: String) -> Result<(), String> {
+    let snapshot = system_snapshot();
+    let Some(definition) = APP_DEFINITIONS.iter().find(|definition| definition.id == app_id) else {
+        return Err("Unknown launcher.".to_string());
+    };
+
+    if definition.live_only && !(snapshot.session_mode == "live" && snapshot.has_calamares_launcher)
+    {
+        return Err("This launcher is only available in a live LotusOS session.".to_string());
     }
+
+    let Some(command_path) = resolve_command(definition.command_candidates) else {
+        return Err(format!("{} is not available in this session.", definition.label));
+    };
+
+    Command::new(command_path)
+        .args(definition.args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map(|_| ())
+        .map_err(|error| format!("Failed to launch {}: {}", definition.label, error))
 }
 
 fn parse_release_file(path: &str) -> HashMap<String, String> {
@@ -160,9 +267,69 @@ fn display_protocol() -> String {
     UNKNOWN_VALUE.to_string()
 }
 
+fn system_snapshot() -> SystemSnapshot {
+    let lotus_release = parse_release_file("/etc/lotusos-release");
+    let os_release = parse_release_file("/etc/os-release");
+    let is_live_session = detect_live_session();
+
+    SystemSnapshot {
+        lotus_name: release_value(&lotus_release, "NAME"),
+        lotus_pretty_name: release_value(&lotus_release, "PRETTY_NAME"),
+        lotus_stage: release_value(&lotus_release, "LOTUSOS_STAGE"),
+        os_name: release_value(&os_release, "NAME"),
+        os_pretty_name: release_value(&os_release, "PRETTY_NAME"),
+        base_id: first_non_empty([
+            lotus_release.get("BASE_ID").map(String::as_str),
+            os_release.get("ID").map(String::as_str),
+        ]),
+        version_codename: release_value(&os_release, "VERSION_CODENAME"),
+        username: username(),
+        hostname: hostname(),
+        session_mode: if is_live_session {
+            "live".to_string()
+        } else {
+            "installed".to_string()
+        },
+        session_type: env_value("XDG_SESSION_TYPE"),
+        current_desktop: env_value("XDG_CURRENT_DESKTOP"),
+        desktop_session: env_value("DESKTOP_SESSION"),
+        display_protocol: display_protocol(),
+        has_calamares_launcher: Path::new("/usr/share/applications/calamares-install-debian.desktop")
+            .exists(),
+    }
+}
+
+fn resolve_command(candidates: &[&str]) -> Option<PathBuf> {
+    candidates.iter().find_map(|candidate| {
+        resolve_absolute_command(candidate).or_else(|| resolve_command_on_path(candidate))
+    })
+}
+
+fn resolve_absolute_command(candidate: &str) -> Option<PathBuf> {
+    let path = PathBuf::from(candidate);
+
+    if path.is_absolute() && path.exists() {
+        return Some(path);
+    }
+
+    None
+}
+
+fn resolve_command_on_path(candidate: &str) -> Option<PathBuf> {
+    let path_value = env::var_os("PATH")?;
+
+    env::split_paths(&path_value)
+        .map(|directory| directory.join(candidate))
+        .find(|path| path.exists())
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_system_snapshot])
+        .invoke_handler(tauri::generate_handler![
+            get_system_snapshot,
+            get_local_apps,
+            launch_local_app
+        ])
         .run(tauri::generate_context!())
         .expect("error while running Lotus Shell");
 }

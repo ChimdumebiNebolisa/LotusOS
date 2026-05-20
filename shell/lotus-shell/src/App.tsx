@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 type SectionId = "home" | "projects" | "notes" | "files" | "ai-hub" | "settings";
 type SnapshotStatus = "loading" | "ready" | "preview" | "error";
+type LauncherStatus = "loading" | "ready" | "preview" | "error";
 
 type Section = {
   id: SectionId;
@@ -42,6 +43,14 @@ type SystemSnapshot = {
 type DetailItem = {
   label: string;
   value: string;
+};
+
+type LocalApp = {
+  id: string;
+  label: string;
+  description: string;
+  available: boolean;
+  visible: boolean;
 };
 
 const sections: Section[] = [
@@ -143,9 +152,47 @@ const browserPreviewSnapshot: SystemSnapshot = {
   hasCalamaresLauncher: false
 };
 
+const browserPreviewApps: LocalApp[] = [
+  {
+    id: "terminal",
+    label: "Terminal",
+    description: "Available inside LotusOS Preview when running in the packaged desktop session.",
+    available: false,
+    visible: true
+  },
+  {
+    id: "files",
+    label: "Files",
+    description: "Available inside LotusOS Preview when Dolphin is present in the packaged session.",
+    available: false,
+    visible: true
+  },
+  {
+    id: "browser",
+    label: "Browser",
+    description: "Available inside LotusOS Preview when Firefox ESR is present in the packaged session.",
+    available: false,
+    visible: true
+  },
+  {
+    id: "editor",
+    label: "Editor",
+    description: "Available inside LotusOS Preview when Kate is present in the packaged session.",
+    available: false,
+    visible: true
+  }
+];
+
 const destinationSections = sections.filter(
   (section): section is Section & { id: Exclude<SectionId, "home"> } => section.id !== "home"
 );
+
+const sectionLaunchers: Record<Exclude<SectionId, "home" | "settings">, string[]> = {
+  projects: ["terminal", "editor"],
+  notes: ["editor", "pdf"],
+  files: ["files", "terminal"],
+  "ai-hub": ["browser", "terminal"]
+};
 
 const formatSessionMode = (sessionMode: string) => {
   if (sessionMode === "live") {
@@ -258,13 +305,80 @@ const loadSystemSnapshot = async (): Promise<{ snapshot: SystemSnapshot; status:
   }
 };
 
+const loadLocalApps = async (): Promise<{ apps: LocalApp[]; status: LauncherStatus }> => {
+  if (!isTauri()) {
+    return { apps: browserPreviewApps, status: "preview" };
+  }
+
+  try {
+    const apps = await invoke<LocalApp[]>("get_local_apps");
+
+    return {
+      apps,
+      status: "ready"
+    };
+  } catch (error) {
+    console.error("Failed to load local apps", error);
+
+    return {
+      apps: browserPreviewApps,
+      status: "error"
+    };
+  }
+};
+
+const launchLocalApp = async (appId: string) => {
+  await invoke("launch_local_app", { appId });
+};
+
+const formatLauncherStatus = (launcherStatus: LauncherStatus) => {
+  if (launcherStatus === "ready") {
+    return "Local launchers ready";
+  }
+
+  if (launcherStatus === "preview") {
+    return "Preview launcher list";
+  }
+
+  if (launcherStatus === "error") {
+    return "Launcher fallback";
+  }
+
+  return "Loading launchers";
+};
+
+const launcherCopy = (launcherStatus: LauncherStatus) => {
+  if (launcherStatus === "ready") {
+    return "These actions only target an allowlisted set of locally installed tools.";
+  }
+
+  return "Launcher actions are shown as a safe preview outside the packaged Tauri runtime.";
+};
+
+const filterAppsByIds = (apps: LocalApp[], ids: string[]) =>
+  ids.map((id) => apps.find((app) => app.id === id)).filter((app): app is LocalApp => Boolean(app));
+
 type HomeDashboardProps = {
   snapshot: SystemSnapshot;
   snapshotStatus: SnapshotStatus;
+  apps: LocalApp[];
+  launcherStatus: LauncherStatus;
+  launchMessage: string | null;
+  launchingAppId: string | null;
   onNavigate: (sectionId: Exclude<SectionId, "home">) => void;
+  onLaunch: (appId: string) => void;
 };
 
-const HomeDashboard = ({ snapshot, snapshotStatus, onNavigate }: HomeDashboardProps) => {
+const HomeDashboard = ({
+  snapshot,
+  snapshotStatus,
+  apps,
+  launcherStatus,
+  launchMessage,
+  launchingAppId,
+  onNavigate,
+  onLaunch
+}: HomeDashboardProps) => {
   return (
     <div className="home-dashboard">
       <section className="home-hero">
@@ -329,17 +443,34 @@ const HomeDashboard = ({ snapshot, snapshotStatus, onNavigate }: HomeDashboardPr
         </article>
 
         <article className="panel">
-          <p className="eyebrow">First Run</p>
-          <h3>Preview release guardrails stay visible.</h3>
+          <p className="eyebrow">Local Launchers</p>
+          <h3>Open installed tools without leaving the shell blind.</h3>
           <p>
-            LotusOS Preview is still local-first and intentionally narrow. This shell does not ship cloud sync, auth,
-            bundled AI credentials, or hidden background services.
+            {launcherCopy(launcherStatus)}
           </p>
-          <ul className="list">
-            <li>Live vs installed awareness</li>
-            <li>Release and desktop context</li>
-            <li>No speculative settings panel</li>
-          </ul>
+          <div className="launch-status-row">
+            <span className="status-badge subtle">{formatLauncherStatus(launcherStatus)}</span>
+            {launchMessage ? <span className="launch-feedback">{launchMessage}</span> : null}
+          </div>
+          <div className="launcher-grid">
+            {apps.map((app) => (
+              <button
+                key={app.id}
+                type="button"
+                className={app.available ? "launcher-card" : "launcher-card disabled"}
+                onClick={() => onLaunch(app.id)}
+                disabled={!app.available || launchingAppId === app.id}
+              >
+                <span className="launcher-title-row">
+                  <span className="launcher-title">{app.label}</span>
+                  <span className={app.available ? "launcher-chip" : "launcher-chip muted"}>
+                    {app.available ? "Ready" : "Unavailable"}
+                  </span>
+                </span>
+                <span className="launcher-description">{app.description}</span>
+              </button>
+            ))}
+          </div>
         </article>
 
         <article className="panel panel-wide">
@@ -378,9 +509,23 @@ const HomeDashboard = ({ snapshot, snapshotStatus, onNavigate }: HomeDashboardPr
 
 type PlaceholderSectionProps = {
   section: Section;
+  apps: LocalApp[];
+  launcherStatus: LauncherStatus;
+  launchMessage: string | null;
+  launchingAppId: string | null;
+  onLaunch: (appId: string) => void;
 };
 
-const PlaceholderSection = ({ section }: PlaceholderSectionProps) => {
+const PlaceholderSection = ({
+  section,
+  apps,
+  launcherStatus,
+  launchMessage,
+  launchingAppId,
+  onLaunch
+}: PlaceholderSectionProps) => {
+  const relatedApps = filterAppsByIds(apps, sectionLaunchers[section.id as Exclude<SectionId, "home" | "settings">] ?? []);
+
   return (
     <>
       <header className="hero">
@@ -402,7 +547,7 @@ const PlaceholderSection = ({ section }: PlaceholderSectionProps) => {
 
         <article className="panel accent-panel">
           <h3>Current State</h3>
-          <p>This section stays intentionally lightweight during Phase 5B while the shell gains read-only session awareness.</p>
+          <p>This section stays intentionally lightweight while the shell exposes a small set of useful local actions.</p>
         </article>
 
         <article className="panel">
@@ -415,8 +560,36 @@ const PlaceholderSection = ({ section }: PlaceholderSectionProps) => {
         </article>
 
         <article className="panel">
-          <h3>Guardrails</h3>
-          <p>No backend storage, sync, or tool launching is introduced in this placeholder during the system-context pass.</p>
+          <h3>Quick Actions</h3>
+          {relatedApps.length > 0 ? (
+            <>
+              <div className="launch-status-row compact">
+                <span className="status-badge subtle">{formatLauncherStatus(launcherStatus)}</span>
+                {launchMessage ? <span className="launch-feedback">{launchMessage}</span> : null}
+              </div>
+              <div className="launcher-list">
+                {relatedApps.map((app) => (
+                  <button
+                    key={app.id}
+                    type="button"
+                    className={app.available ? "launcher-row" : "launcher-row disabled"}
+                    onClick={() => onLaunch(app.id)}
+                    disabled={!app.available || launchingAppId === app.id}
+                  >
+                    <span className="launcher-row-copy">
+                      <span className="launcher-title">{app.label}</span>
+                      <span className="launcher-description">{app.description}</span>
+                    </span>
+                    <span className={app.available ? "launcher-chip" : "launcher-chip muted"}>
+                      {app.available ? "Open" : "Unavailable"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p>No local launcher is mapped to this placeholder yet.</p>
+          )}
         </article>
       </section>
     </>
@@ -499,28 +672,49 @@ const App = () => {
   const [activeSection, setActiveSection] = useState<SectionId>("home");
   const [snapshot, setSnapshot] = useState<SystemSnapshot>(browserPreviewSnapshot);
   const [snapshotStatus, setSnapshotStatus] = useState<SnapshotStatus>("loading");
+  const [apps, setApps] = useState<LocalApp[]>(browserPreviewApps);
+  const [launcherStatus, setLauncherStatus] = useState<LauncherStatus>("loading");
+  const [launchMessage, setLaunchMessage] = useState<string | null>(null);
+  const [launchingAppId, setLaunchingAppId] = useState<string | null>(null);
   const section = sections.find((item) => item.id === activeSection) ?? sections[0];
 
   useEffect(() => {
     let cancelled = false;
 
-    const hydrateSnapshot = async () => {
-      const result = await loadSystemSnapshot();
+    const hydrateRuntime = async () => {
+      const [snapshotResult, appResult] = await Promise.all([loadSystemSnapshot(), loadLocalApps()]);
 
       if (cancelled) {
         return;
       }
 
-      setSnapshot(result.snapshot);
-      setSnapshotStatus(result.status);
+      setSnapshot(snapshotResult.snapshot);
+      setSnapshotStatus(snapshotResult.status);
+      setApps(appResult.apps.filter((app) => app.visible));
+      setLauncherStatus(appResult.status);
     };
 
-    hydrateSnapshot();
+    hydrateRuntime();
 
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const handleLaunch = async (appId: string) => {
+    setLaunchMessage(null);
+    setLaunchingAppId(appId);
+
+    try {
+      await launchLocalApp(appId);
+      setLaunchMessage("Launcher command sent.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Launcher failed.";
+      setLaunchMessage(message);
+    } finally {
+      setLaunchingAppId(null);
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -547,11 +741,31 @@ const App = () => {
       </aside>
 
       <main className="workspace">
-        {activeSection === "home" ? <HomeDashboard snapshot={snapshot} snapshotStatus={snapshotStatus} onNavigate={setActiveSection} /> : null}
+        {activeSection === "home" ? (
+          <HomeDashboard
+            snapshot={snapshot}
+            snapshotStatus={snapshotStatus}
+            apps={apps}
+            launcherStatus={launcherStatus}
+            launchMessage={launchMessage}
+            launchingAppId={launchingAppId}
+            onNavigate={setActiveSection}
+            onLaunch={handleLaunch}
+          />
+        ) : null}
         {activeSection === "settings" ? (
           <SettingsOverviewSection section={section} snapshot={snapshot} snapshotStatus={snapshotStatus} />
         ) : null}
-        {activeSection !== "home" && activeSection !== "settings" ? <PlaceholderSection section={section} /> : null}
+        {activeSection !== "home" && activeSection !== "settings" ? (
+          <PlaceholderSection
+            section={section}
+            apps={apps}
+            launcherStatus={launcherStatus}
+            launchMessage={launchMessage}
+            launchingAppId={launchingAppId}
+            onLaunch={handleLaunch}
+          />
+        ) : null}
       </main>
     </div>
   );
