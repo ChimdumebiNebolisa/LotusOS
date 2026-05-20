@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 Name=Lotus Shell
-Comment=LotusOS workspace layer
+Comment=LotusOS Preview workspace surface
 Exec=/opt/lotus-shell/lotus-shell
-Icon=computer
+Icon=lotus-shell
 Terminal=false
 Categories=Utility;Development;

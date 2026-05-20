@@ -49,11 +49,11 @@ const sections: Section[] = [
     id: "home",
     label: "Home",
     eyebrow: "Front Door",
-    title: "Start in one calm place.",
+    title: "Start in one clear place.",
     description:
-      "Lotus Shell is the workspace layer for study, coding, and project flow inside LotusOS.",
-    actions: ["Resume current work", "Open recent project", "Review today"],
-    highlights: ["Home dashboard ready", "Local-first shell", "Phase 5B system context"]
+      "Lotus Shell is the home and workspace layer for study, coding, and project flow inside LotusOS.",
+    actions: ["Check this session", "Open local tools", "Review project spaces"],
+    highlights: ["LotusOS preview shell", "Local-first desktop surface", "Read-only system context"]
   },
   {
     id: "projects",
@@ -127,8 +127,8 @@ const homeActions: HomeAction[] = [
 
 const browserPreviewSnapshot: SystemSnapshot = {
   lotusName: "LotusOS",
-  lotusPrettyName: "Browser Preview",
-  lotusStage: "local-preview",
+  lotusPrettyName: "LotusOS Preview",
+  lotusStage: "preview",
   osName: "Unknown",
   osPrettyName: "Unknown",
   baseId: "Unknown",
@@ -202,10 +202,10 @@ const formatSnapshotDescription = (snapshot: SystemSnapshot, snapshotStatus: Sna
 
   if (snapshotStatus === "ready") {
     if (snapshot.sessionMode === "live") {
-      return "Lotus Shell can see a live LotusOS session, its current desktop context, and whether the installer surface is present.";
+      return "Lotus Shell can see a live LotusOS preview session, its current desktop context, and whether the installer surface is present.";
     }
 
-    return "Lotus Shell can see an installed LotusOS session, its current desktop context, and a narrow set of local release details.";
+    return "Lotus Shell can see an installed LotusOS preview session, its current desktop context, and a narrow set of local release details.";
   }
 
   return "Lotus Shell is running outside the packaged Tauri runtime, so the UI is showing a safe fallback snapshot instead of local OS data.";
@@ -272,8 +272,8 @@ const HomeDashboard = ({ snapshot, snapshotStatus, onNavigate }: HomeDashboardPr
           <p className="eyebrow">LotusOS Home</p>
           <h2>A calm first place to start.</h2>
           <p className="description">
-            Lotus Shell is the workspace layer inside LotusOS. Phase 5B keeps the shell narrow while making Home aware of
-            the local OS and session it is actually running inside.
+            Lotus Shell is the workspace layer inside LotusOS Preview. This pass keeps the shell narrow while making Home
+            feel like a deliberate front door instead of a scaffold.
           </p>
 
           <div className="hero-actions">
@@ -319,26 +319,26 @@ const HomeDashboard = ({ snapshot, snapshotStatus, onNavigate }: HomeDashboardPr
       <section className="home-grid">
         <article className="panel">
           <p className="eyebrow">Overview</p>
-          <h3>What Lotus Shell is for</h3>
-          <p>This surface should orient the session quickly instead of dropping the user into a bare scaffold.</p>
+          <h3>What LotusOS Preview is trying to feel like</h3>
+          <p>This surface should orient the session quickly instead of dropping the desktop into a bare app stub.</p>
           <ul className="list">
-            <li>Study flow</li>
-            <li>Coding sessions</li>
+            <li>Calm first-run desktop</li>
+            <li>Study and coding flow</li>
             <li>Local project organization</li>
           </ul>
         </article>
 
         <article className="panel">
-          <p className="eyebrow">Runtime Context</p>
-          <h3>Home now reflects the current system truthfully.</h3>
+          <p className="eyebrow">First Run</p>
+          <h3>Preview release guardrails stay visible.</h3>
           <p>
-            This phase adds read-only session awareness only. It does not add persistence, app launching, installer changes,
-            or any remote dependency.
+            LotusOS Preview is still local-first and intentionally narrow. This shell does not ship cloud sync, auth,
+            bundled AI credentials, or hidden background services.
           </p>
           <ul className="list">
             <li>Live vs installed awareness</li>
             <li>Release and desktop context</li>
-            <li>Installer presence as data only</li>
+            <li>No speculative settings panel</li>
           </ul>
         </article>
 
@@ -525,11 +525,11 @@ const App = () => {
   return (
     <div className="app-shell">
       <aside className="rail">
-        <div className="brand-mark">Lotus</div>
+        <div className="brand-mark">LO</div>
         <div className="brand-copy">
           <p className="eyebrow">LotusOS</p>
           <h1>Shell</h1>
-          <p className="caption">Phase 5B system context</p>
+          <p className="caption">Preview workspace surface</p>
         </div>
 
         <nav className="nav">
