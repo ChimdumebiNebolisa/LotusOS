@@ -186,4 +186,4 @@ bash os/scripts/test-qemu.sh artifacts/lotusos-amd64.iso
 
 ## License
 
-No repository `LICENSE` file is present in this preview milestone. Add an explicit project license before broader redistribution.
+MIT. See [LICENSE](C:/Users/Chimdumebi/LotusOS/LICENSE).
