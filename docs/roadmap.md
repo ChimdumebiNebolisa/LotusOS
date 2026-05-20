@@ -56,20 +56,29 @@ Status: in progress.
 
 ## Phase 4: Installer Integration
 
-Status: partial verification.
+Status: verified on the disposable VDI install path.
 
 - Add Calamares package and config.
 - Add LotusOS installer branding.
 - Verify installation into a VM.
 - Document install limitations and recovery steps.
-- Current state: the ISO builds with Calamares integrated and the supported VirtualBox GUI path reaches a visible KDE plus Lotus Shell state, but the installer launcher and open flow are not yet directly re-proven on-screen.
+- Current state: Calamares opens, a disposable VDI install completes, the installed VDI boots, the SDDM greeter appears, Plasma loads, and Lotus Shell autostarts in the installed system.
 
-## Phase 5: Niche Features
+## Phase 5A: Lotus Shell Home Polish
 
-Status: planned after boot and install reliability.
+Status: verified locally in the shell app only.
 
-- Project dashboard.
-- Notes and resource hub.
+- Keep Phase 5A limited to the Lotus Shell `Home` surface.
+- Replace the generic scaffold-style home screen with a dedicated first-run dashboard.
+- Keep Projects, Notes, Files, AI Hub, and Settings as placeholder-only surfaces.
+- Verify static in-app navigation, placeholder labeling, and frontend build output.
+
+## Phase 5B And Later
+
+Status: planned after Phase 5A home polish.
+
+- Project dashboard depth.
+- Notes and resource hub implementation.
 - Local file/project organization.
 - Local search.
 - Git/repository launcher.
