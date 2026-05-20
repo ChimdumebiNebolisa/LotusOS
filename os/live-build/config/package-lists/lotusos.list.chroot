@@ -19,9 +19,12 @@ okular
 firefox-esr
 libreoffice
 kate
+calamares
+calamares-settings-debian
 nodejs
 npm
 python3
 python3-pip
 rustc
 cargo
+libwebkit2gtk-4.1-0

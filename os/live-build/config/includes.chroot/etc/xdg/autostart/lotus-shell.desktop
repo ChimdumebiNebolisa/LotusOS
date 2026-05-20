@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Lotus Shell
+Comment=Launch Lotus Shell on live session startup
+Exec=/usr/local/bin/lotus-shell-launch
+Icon=computer
+Terminal=false
+Categories=Utility;Development;
+X-GNOME-Autostart-enabled=true
+X-KDE-autostart-after=panel

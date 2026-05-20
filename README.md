@@ -1,50 +1,130 @@
 # LotusOS
 
-LotusOS is a custom Linux-based operating system for AI-native student and developer workflow.
+## What this is
 
-It is not a from-scratch kernel, not a desktop app, and not a generic Linux theme. LotusOS is intended to become a full bootable Debian-based operating system image with opinionated defaults for coding, studying, research, files, projects, and local-first productivity.
+LotusOS is a custom Debian-based Linux live/installable ISO with a Tauri + React + Rust shell called Lotus Shell. It boots into KDE Plasma, autostarts Lotus Shell, and includes a Calamares installer that has been verified on disposable VirtualBox VDIs. The current preview is a source-and-docs milestone for a local-first workspace OS, not a production hardware release.
 
-Lotus Shell is the custom app/interface layer inside LotusOS. It is not the whole OS.
+## Problem it solves
 
-## Current Status
+LotusOS explores how to turn a normal Linux base into a focused, calm, local-first workspace OS without writing a custom kernel or bootloader from scratch. Instead of leaving users in a generic desktop with scattered entry points, it adds a first-run home surface, local system context, app launchers, and bounded project and resource areas on top of a standard Debian + KDE base.
 
-This repository now contains the initial Phase 0 and Phase 1 scaffold:
+## Demo
 
-- Project direction docs.
-- Debian `live-build` OS scaffold targeting Debian 13 `trixie`.
-- KDE Plasma as the first desktop target.
-- Package list drafts.
-- Branding placeholder locations.
-- Safe build, test, and clean script entrypoints.
-- Reserved `shell/lotus-shell/` path for the future Tauri app.
+![LotusOS live desktop with Lotus Shell](docs/assets/readme/lotusos-live-desktop.png)
 
-No ISO has been built or verified yet. LotusOS is not installable yet. Lotus Shell is currently a planned first-class app, not an implemented app.
+![Lotus Shell Home dashboard](docs/assets/readme/lotus-shell-home.png)
 
-## MVP Target
+![Lotus Shell Settings system overview](docs/assets/readme/lotus-shell-settings.png)
 
-The first successful LotusOS MVP must:
+![LotusOS installer completion](docs/assets/readme/lotusos-installer.png)
 
-1. Build a bootable ISO.
-2. Boot in QEMU.
-3. Show LotusOS branding where feasible.
-4. Land on a working KDE Plasma desktop session.
-5. Include Lotus Shell preinstalled or clearly stubbed as a first-class app.
-6. Include a basic default app set.
-7. Include documented build and test commands.
-8. Remain reproducible.
+## Screenshots
 
-## Build Host
+| Screenshot | Evidence |
+| --- | --- |
+| Live desktop | ![LotusOS live desktop](docs/assets/readme/lotusos-live-desktop.png) |
+| Home dashboard | ![Lotus Shell Home dashboard](docs/assets/readme/lotus-shell-home.png) |
+| Settings overview | ![Lotus Shell Settings overview](docs/assets/readme/lotus-shell-settings.png) |
+| Installer completion | ![LotusOS installer completion](docs/assets/readme/lotusos-installer.png) |
 
-Use a Linux host or WSL2 Ubuntu environment. Debian `live-build` is not expected to run directly in PowerShell.
+Installed-system boot, SDDM, and post-login Lotus Shell were manually verified for Phase 5F, but no additional installed-desktop screenshot is curated in this README set.
 
-Install initial build dependencies inside WSL/Linux:
+## How it works and how to use
+
+1. Build the ISO through Debian `live-build`.
+2. Boot the ISO in VirtualBox.
+3. KDE Plasma starts in the live session.
+4. Lotus Shell autostarts.
+5. Calamares can install the image to a disposable VDI.
+6. The installed system boots into SDDM and Plasma.
+7. Lotus Shell autostarts again after installed login.
+
+## Features
+
+- Debian-based live ISO
+- KDE Plasma desktop
+- Lotus Shell autostart
+- Polished Home dashboard
+- Read-only system snapshot
+- Settings system overview
+- Local app launcher surface
+- Local resource and project cards
+- Calamares installer integration
+- Disposable VDI install verification
+- Local-first scope
+- No bundled AI credentials
+
+## Tech stack and architecture
+
+```mermaid
+flowchart TD
+    A[Debian live-build] --> B[LotusOS ISO]
+    B --> C[KDE Plasma live session]
+    C --> D[Lotus Shell autostart]
+    D --> E[Tauri shell]
+    E --> F[React UI]
+    E --> G[Rust backend commands]
+    B --> H[Calamares installer]
+    H --> I[Disposable VDI install]
+    I --> J[Installed LotusOS desktop]
+```
+
+- Debian `live-build`
+- KDE Plasma
+- Calamares
+- Tauri
+- React
+- TypeScript
+- Rust
+- VirtualBox verification
+
+## Detailed setup instructions
+
+### Prerequisites
+
+Use Linux or WSL2 Ubuntu for ISO work. The OS build scripts are Bash scripts and are not intended to run directly in PowerShell.
 
 ```bash
 sudo apt update
 sudo apt install live-build qemu-system-x86 xorriso isolinux syslinux-common squashfs-tools
+sudo apt install nodejs npm cargo rustc libgtk-3-dev libwebkit2gtk-4.1-dev librsvg2-dev
 ```
 
-Check the build environment without building an ISO:
+If the distro Rust toolchain is too old for the Tauri packaging path, install a current stable Rust toolchain with `rustup`.
+
+### Clone the repo
+
+```bash
+git clone https://github.com/ChimdumebiNebolisa/LotusOS.git
+cd LotusOS
+```
+
+### Shell dependency install
+
+```bash
+cd shell/lotus-shell
+npm install
+```
+
+### Local shell build
+
+```bash
+cd shell/lotus-shell
+npm run build
+```
+
+### Tauri build and checks
+
+```bash
+cd shell/lotus-shell/src-tauri
+cargo check
+cd ..
+npm run tauri build -- --no-bundle
+```
+
+### ISO build from WSL/Linux
+
+Repository-root dependency check:
 
 ```bash
 bash os/scripts/build-iso.sh --check
@@ -56,25 +136,54 @@ Build the ISO:
 bash os/scripts/build-iso.sh
 ```
 
-Boot the ISO in QEMU:
+WSL root build with user `rustup` paths exported:
+
+```bash
+wsl.exe -u root -- /usr/bin/bash -c 'export CARGO_HOME=/home/<user>/.cargo RUSTUP_HOME=/home/<user>/.rustup PATH="/home/<user>/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; cd /mnt/c/Users/Chimdumebi/LotusOS && bash os/scripts/build-iso.sh'
+```
+
+### ISO content verification
+
+```bash
+wsl.exe -u root -- /usr/bin/bash os/scripts/verify-iso-contents.sh
+```
+
+### VirtualBox boot testing
+
+Primary supported VirtualBox lane:
+
+- OS type: Debian 64-bit
+- RAM: `4096 MB`
+- CPUs: `2`
+- VRAM: `128 MB`
+- Graphics controller: `VMSVGA`
+- 3D acceleration: `on`
+
+Optional QEMU smoke boot:
 
 ```bash
 bash os/scripts/test-qemu.sh artifacts/lotusos-amd64.iso
 ```
 
-Clean generated build artifacts:
+## Testing
 
-```bash
-bash os/scripts/clean.sh --dry-run
-bash os/scripts/clean.sh
-```
+- `cd shell/lotus-shell && npm run build`
+- `cd shell/lotus-shell/src-tauri && cargo check`
+- `cd shell/lotus-shell && npm run tauri build -- --no-bundle`
+- `wsl.exe -u root -- /usr/bin/bash os/scripts/verify-iso-contents.sh`
+- VirtualBox live ISO verification
+- Disposable VDI install verification
 
-## Project Docs
+## Known limitations
 
-- Product vision: `docs/vision.md`
-- Architecture: `docs/architecture.md`
-- Roadmap: `docs/roadmap.md`
-- Build notes: `docs/build.md`
-- Decisions: `docs/decisions/`
-- Verification notes: `docs/verification/`
+- VirtualBox graphics and session instability has appeared in some timed runs, even in the supported `VMSVGA` + 3D `on` lane.
+- Hardware installation is not verified.
+- ISO and VDI artifacts are not committed to git.
+- AI Hub is placeholder/local-first only.
+- No cloud sync or auth.
+- No production release guarantees.
+- Phase 5F installed-system verification is manually verified after an automated Calamares run was blocked by a live-session lock.
 
+## License
+
+No repository `LICENSE` file is present in this preview milestone. Add an explicit project license before broader redistribution.

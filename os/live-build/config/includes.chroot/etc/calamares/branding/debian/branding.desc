@@ -1,0 +1,39 @@
+---
+componentName:   debian
+welcomeStyleCalamares: true
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 800px,580px
+windowPlacement: center
+
+strings:
+    productName:         LotusOS
+    shortProductName:    LotusOS
+    version:             Preview
+    shortVersion:        Preview
+    versionedName:       LotusOS Preview
+    shortVersionedName:  LotusOS Preview
+    bootloaderEntryName: LotusOS
+    productUrl:          https://github.com/ChimdumebiNebolisa/LotusOS
+    supportUrl:          https://github.com/ChimdumebiNebolisa/LotusOS/issues
+    knownIssuesUrl:      https://github.com/ChimdumebiNebolisa/LotusOS/issues
+    releaseNotesUrl:     https://github.com/ChimdumebiNebolisa/LotusOS
+    donateUrl:           https://github.com/ChimdumebiNebolisa/LotusOS
+
+sidebar: widget
+navigation: widget
+
+images:
+    productLogo:         "debian-logo.png"
+    productIcon:         "debian-logo.png"
+    productWelcome:      "welcome.png"
+
+slideshow:               "show.qml"
+
+style:
+   SidebarBackground:    "#26475b"
+   SidebarText:          "#FFFFFF"
+   SidebarTextCurrent:   "#fbfbfb"
+   SidebarBackgroundCurrent: "#265370"
+
+slideshowAPI: 2

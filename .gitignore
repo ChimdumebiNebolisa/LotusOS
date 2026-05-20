@@ -20,3 +20,8 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Lotus Shell build outputs
+/shell/lotus-shell/node_modules/
+/shell/lotus-shell/dist/
+/shell/lotus-shell/src-tauri/target/

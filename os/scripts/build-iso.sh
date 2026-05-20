@@ -21,6 +21,12 @@ fail() {
   exit 1
 }
 
+version_ge() {
+  local actual="$1"
+  local minimum="$2"
+  [[ "$(printf '%s\n%s\n' "$minimum" "$actual" | sort -V | head -n 1)" == "$minimum" ]]
+}
+
 check_only=false
 for arg in "$@"; do
   case "$arg" in
@@ -45,6 +51,7 @@ fi
 
 repo_root="$(cd -- "$script_dir/../.." && pwd)"
 source_live_build_dir="$repo_root/os/live-build"
+lotus_shell_dir="$repo_root/shell/lotus-shell"
 build_root="${LOTUSOS_BUILD_ROOT:-/tmp/lotusos-live-build}"
 live_build_dir="$build_root/live-build"
 artifacts_dir="$repo_root/artifacts"
@@ -108,6 +115,7 @@ repair_grub2_eltorito_iso() {
   local grub_mkimage="$live_build_dir/chroot/usr/bin/grub-mkimage"
   local linker="$live_build_dir/chroot/lib64/ld-linux-x86-64.so.2"
   local lib_path="$live_build_dir/chroot/lib/x86_64-linux-gnu:$live_build_dir/chroot/usr/lib/x86_64-linux-gnu"
+  local bootstrap_cfg
   local core_img
   local grub_size
 
@@ -127,16 +135,25 @@ repair_grub2_eltorito_iso() {
   [[ -x "$grub_mkimage" ]] || fail "Missing grub-mkimage in live-build chroot: $grub_mkimage"
   [[ -x "$linker" ]] || fail "Missing chroot dynamic linker: $linker"
 
+  bootstrap_cfg="$(mktemp)"
   core_img="$(mktemp)"
+  cat > "$bootstrap_cfg" <<'EOF'
+set prefix=($root)/boot/grub
+set root=cd0
+configfile /boot/grub/grub.cfg
+EOF
   "$linker" --library-path "$lib_path" "$grub_mkimage" \
+    -c "$bootstrap_cfg" \
     -d "$grub_dir" \
     -O i386-pc \
     -p /boot/grub \
     -o "$core_img" \
-    biosdisk iso9660 normal configfile
+    biosdisk iso9660 part_msdos normal configfile search search_fs_file search_fs_uuid search_label linux \
+    all_video boot cat echo font gettext gfxmenu gfxterm gfxterm_background png tga \
+    test video video_bochs video_cirrus
 
   cat "$cdboot_img" "$core_img" > "$grub_img"
-  rm -f -- "$core_img"
+  rm -f -- "$bootstrap_cfg" "$core_img"
 
   grub_size="$(stat -c '%s' "$grub_img")"
   if ((grub_size <= 4096)); then
@@ -183,6 +200,84 @@ rebuild_binary_iso() {
     "$live_build_dir/binary"
 }
 
+stage_lotus_shell() {
+  local shell_package_json="$lotus_shell_dir/package.json"
+  local shell_stage_dir="$live_build_dir/config/includes.chroot/opt/lotus-shell"
+  local shell_build_root="$build_root/lotus-shell-build"
+  local shell_source_dir="$shell_build_root/source"
+  local shell_target_dir="$shell_build_root/target"
+  local shell_binary="$shell_target_dir/release/lotus-shell"
+  local cargo_version
+  local rustc_version
+
+  [[ -f "$shell_package_json" ]] || return 0
+
+  for cmd in node npm cargo rustc; do
+    command -v "$cmd" >/dev/null 2>&1 || fail "Lotus Shell packaging requires host command: $cmd"
+  done
+
+  cargo_version="$(cargo --version | awk '{print $2}')"
+  rustc_version="$(rustc --version | awk '{print $2}')"
+  version_ge "$cargo_version" "1.85.0" || fail "Lotus Shell packaging requires cargo >= 1.85.0. Load a current rustup stable toolchain before running the ISO build."
+  version_ge "$rustc_version" "1.85.0" || fail "Lotus Shell packaging requires rustc >= 1.85.0. Load a current rustup stable toolchain before running the ISO build."
+
+  log "Building Lotus Shell for inclusion in the live image."
+  rm -rf -- "$shell_build_root"
+  mkdir -p "$shell_source_dir"
+  tar \
+    --exclude='./node_modules' \
+    --exclude='./dist' \
+    --exclude='./src-tauri/target' \
+    -cf - \
+    -C "$lotus_shell_dir" \
+    . | tar -xf - -C "$shell_source_dir"
+  (
+    cd "$shell_source_dir"
+    npm ci --cache "$build_root/npm-cache"
+    CARGO_TARGET_DIR="$shell_target_dir" npm run tauri build -- --no-bundle
+  )
+
+  [[ -x "$shell_binary" ]] || fail "Lotus Shell build did not produce $shell_binary"
+  install -Dm755 "$shell_binary" "$shell_stage_dir/lotus-shell"
+  log "Staged Lotus Shell binary at $shell_stage_dir/lotus-shell"
+}
+
+ensure_grub_menu_defaults() {
+  local grub_cfg="$live_build_dir/binary/boot/grub/grub.cfg"
+  local kernel_path
+  local kernel_version
+
+  [[ -f "$grub_cfg" ]] || return 0
+
+  log "Enforcing GRUB menu defaults for unattended LotusOS live boot."
+  kernel_path="$(sed -n 's/^[[:space:]]*linux[[:space:]]\+\([^[:space:]]\+\).*/\1/p' "$grub_cfg" | head -n 1)"
+  kernel_version="${kernel_path#/live/vmlinuz-}"
+  sed -i \
+    -e '/^set default=/d' \
+    -e '/^set root=/d' \
+    -e '/^search --no-floppy --set=root --file /d' \
+    -e '/^set timeout_style=/d' \
+    -e '/^set timeout=/d' \
+    "$grub_cfg"
+  if [[ -n "$kernel_path" ]]; then
+    sed -i "s|^[[:space:]]*linux\\([[:space:]]\\+\\)/live/|linux\\1(\\\$root)/live/|" "$grub_cfg"
+    sed -i "s|^[[:space:]]*initrd\\([[:space:]]\\+\\)/live/|initrd\\1(\\\$root)/live/|" "$grub_cfg"
+    sed -i \
+      -e 's|^menuentry "Debian GNU/Linux - live"|menuentry "LotusOS Live"|' \
+      -e 's|^menuentry "Debian GNU/Linux - live (fail-safe mode)"|menuentry "LotusOS Live (safe graphics)"|' \
+      -e "s|^menuentry \"Debian GNU/Linux - live, kernel $kernel_version\"|menuentry \"LotusOS Live (kernel $kernel_version)\"|" \
+      -e "s|^menuentry \"Debian GNU/Linux - live, kernel $kernel_version (fail-safe mode)\"|menuentry \"LotusOS Live (kernel $kernel_version, safe graphics)\"|" \
+      "$grub_cfg"
+    sed -i "1i set timeout=3\nset timeout_style=menu\nset default=0\nset root=cd0\nsearch --no-floppy --set=root --file $kernel_path\n" "$grub_cfg"
+  else
+    sed -i \
+      -e 's|^menuentry "Debian GNU/Linux - live"|menuentry "LotusOS Live"|' \
+      -e 's|^menuentry "Debian GNU/Linux - live (fail-safe mode)"|menuentry "LotusOS Live (safe graphics)"|' \
+      "$grub_cfg"
+    sed -i '1i set timeout=3\nset timeout_style=menu\nset default=0\nset root=cd0\n' "$grub_cfg"
+  fi
+}
+
 mkdir -p "$artifacts_dir"
 
 log "Preparing native Linux build workspace at $build_root"
@@ -195,6 +290,8 @@ rm -f -- \
   "$live_build_dir/config/chroot" \
   "$live_build_dir/config/common" \
   "$live_build_dir/config/source"
+
+stage_lotus_shell
 
 log "Starting live-build."
 (

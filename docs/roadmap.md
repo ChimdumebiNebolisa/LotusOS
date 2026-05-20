@@ -1,65 +1,111 @@
 # LotusOS Roadmap
 
+## Verified milestone state
+
+- Phase 4 installer integration: `verified`
+- Phase 5E live-shell verification: `verified`
+- Phase 5F installed-shell verification: `manually verified after a Codex automation attempt was blocked by a live-session lock`
+- Phase 6 identity polish: `implemented and locally verified`
+- Phase 7 local app launcher surface: `implemented and locally verified`
+- Phase 8 local resource hub: `implemented and locally verified`
+- Phase 9 release hygiene: `completed in this preview closeout pass`
+
 ## Phase 0: Repo Audit And Project Direction
 
-Status: scaffolded.
-
-- Inspect repository state.
-- Confirm whether existing code is OS build system, Lotus Shell, or unrelated.
-- Define product niche and MVP boundary.
-- Add vision, architecture, roadmap, build, decisions, and verification docs.
+Status: completed.
 
 ## Phase 1: OS Build Scaffold
 
-Status: scaffolded, not verified as a successful build.
-
-- Add `os/` structure.
-- Add Debian `live-build` scaffold.
-- Add package list drafts.
-- Add branding placeholder paths.
-- Add safe build, test, and clean scripts.
-- Document WSL/Linux build host requirements.
+Status: completed.
 
 ## Phase 2: First Bootable Live ISO
 
-Status: planned.
-
-- Configure live-build until an ISO is produced.
-- Boot the ISO in QEMU.
-- Verify KDE Plasma desktop session.
-- Verify network tooling.
-- Verify LotusOS branding where configured.
-- Record results in `docs/verification/`.
+Status: verified.
 
 ## Phase 3: Lotus Shell Packaging
 
-Status: planned.
+Status: verified.
 
-- Create or import the Tauri + React + TypeScript + Rust Lotus Shell app.
-- Add Home, Projects, Notes, Files, AI Hub placeholder, and Settings placeholder screens.
-- Package or copy Lotus Shell into the live image.
-- Add a desktop launcher.
-- Verify Lotus Shell opens in the live session.
+## Phase 3C: Live Boot And Desktop Polish
+
+Status: verified with ongoing VirtualBox caveats.
+
+- The supported `VMSVGA` + 3D `on` lane reaches KDE and Lotus Shell.
+- VirtualBox graphics and session instability still appears in some timed runs and remains a documented limitation rather than a packaging blocker.
 
 ## Phase 4: Installer Integration
 
-Status: planned.
+Status: verified.
 
-- Add Calamares package and config.
-- Add LotusOS installer branding.
-- Verify installation into a VM.
-- Document install limitations and recovery steps.
+- Calamares opens from the live session.
+- Disposable VDI install flow is verified.
+- Installed boot reaches SDDM, Plasma, and Lotus Shell.
 
-## Phase 5: Niche Features
+## Phase 5A: Lotus Shell Home Polish
 
-Status: planned after boot and install reliability.
+Status: implemented and locally verified.
 
-- Project dashboard.
-- Notes and resource hub.
-- Local file/project organization.
+## Phase 5B: Lotus Shell System Snapshot
+
+Status: implemented and locally verified.
+
+## Phase 5C: Tauri Packaging Cleanup
+
+Status: verified locally on Windows.
+
+## Phase 5D: Rebuilt ISO Packaging
+
+Status: verified.
+
+- `artifacts/lotusos-amd64.iso` was rebuilt with the current Lotus Shell binary.
+
+## Phase 5E: Live ISO Shell Verification
+
+Status: verified.
+
+- Rebuilt ISO boots.
+- KDE/live session reaches desktop.
+- Lotus Shell autostarts.
+- Updated Home and read-only Settings surfaces appear.
+
+## Phase 5F: Installed System Shell Verification
+
+Status: manually verified.
+
+- Automated Calamares navigation was blocked when the live session locked.
+- Manual follow-up verification completed the missing install, boot, greeter, login, Plasma, and Lotus Shell checks on the rebuilt ISO.
+- This phase is intentionally recorded as manually verified, not fully automated.
+
+## Phase 6: OS Identity Polish
+
+Status: implemented and locally verified.
+
+## Phase 7: Local App Launcher Surface
+
+Status: implemented and locally verified.
+
+## Phase 8: Local Resource Hub
+
+Status: implemented and locally verified.
+
+## Phase 9: Release Hygiene
+
+Status: completed.
+
+- README, roadmap, architecture, build notes, master plan, verification notes, and release notes are reconciled with the verified preview state.
+- Curated README screenshots are copied from tracked local VM evidence only.
+
+## Known limitations
+
+- VirtualBox graphics and session instability remains a documented caveat.
+- Hardware installation is not verified.
+- LotusOS is not production-ready.
+- ISO, VDI, and VM log artifacts remain out of git.
+
+## Later
+
 - Local search.
-- Git/repository launcher.
-- Study workspace.
-- PDF/document workflow.
-- AI Hub integrations.
-
+- Deeper repository and project-launch workflows.
+- Study workspace expansion.
+- PDF and document workflow depth.
+- AI Hub integrations beyond the current placeholder/local-first stance.
