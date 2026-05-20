@@ -1,6 +1,6 @@
 # Phase 4: Installer Integration
 
-Status: installer-open verified; install still untested.
+Status: disposable install verified; installed boot still inconclusive.
 
 ## Purpose
 
@@ -115,14 +115,52 @@ Proof path:
 
 ## Install Test Result
 
-- Attempted: `no`
-- Reason: this pass only verified that Calamares opens in the live session. No disposable install disk was attached, and no install was attempted.
+- Attempted: `yes`
+- Installer completion: `yes`
+- Installed-system boot result: `inconclusive`
+- Classification: `partial Phase 4 success`
+
+## Phase 4C Safe Disposable-Disk Install Test
+
+- Date/time: `2026-05-19 18:01 -05:00` to `2026-05-19 19:12 -05:00`
+- VM name: `LotusOS-Phase4C-Install-Test`
+- Disposable VDI path: `C:\Users\Chimdumebi\VirtualBox VMs\LotusOS-Phase4C-Install-Test\LotusOS-Phase4C-Install-Test.vdi`
+- Disposable VDI size: `25600 MBytes` capacity (`25.00 GiB`), dynamic VDI, `8441 MBytes` on disk after the test
+- ISO used: `artifacts/lotusos-amd64.iso`
+- Live-session launcher path used: KDE application launcher search for `install lotusos`
+
+Disk-target safety confirmation:
+
+- Calamares showed exactly one install target: `VBOX HARDDISK - 25.00 GiB (/dev/sda)`
+- No host disk, physical disk, shared-folder-backed disk, or other ambiguous disk target was shown
+- The summary page matched the same disposable target and showed `Erase disk /dev/sda (VBOX HARDDISK)` with boot loader install on `/dev/sda`
+
+Install execution result:
+
+- Calamares install started only after the disposable-disk target was visually confirmed
+- Calamares reached the finish page and reported `All done.`
+- The live session blanked and locked during the long install run, but the installer was still active after unlocking the live session with password `live`
+
+Installed-boot result after ISO detach:
+
+- VM was powered off
+- ISO was detached
+- Boot order was switched to hard disk only
+- VirtualBox BIOS reported `Booting from Hard Disk...`
+- Timed evidence from the installed-disk boot was unstable:
+- `20s`: screenshot attempt failed because VirtualBox reported an unsupported `0x0` framebuffer, so `phase4c-installed-boot-20s.png` was not written
+- `90s`: black framebuffer
+- `5m`: wallpaper-only graphical state
+- `10m` follow-up: still wallpaper-only graphical state
+- A visible greeter or desktop was not reached, so `phase4c-installed-desktop.png` was not captured
 
 ## Known Caveats
 
 - The existing VirtualBox live-session caveat from Phase 3C still applies.
 - The headless VirtualBox frontend fell back into a `vmwgfx` console path even with `VMSVGA` plus 3D `on`.
 - The GUI frontend was materially better and reached a usable live session again, but timed screenshots still showed an intermittent transient `vmwgfx` console frame before the `5m` live-session state.
+- The disposable-disk install itself completed, but the installed-system GUI boot did not progress beyond a wallpaper-only state in the same VirtualBox graphics lane.
+- The first installed-boot screenshot could not be captured at `20s` because VirtualBox exposed a temporary `0x0` framebuffer during early hard-disk boot.
 
 ## Safe Install Warning
 
@@ -155,10 +193,18 @@ Proof path:
 - `artifacts/vm-verification/phase4-installer-open-search.png`
 - `artifacts/vm-verification/phase4-installer-open.png`
 - `artifacts/vm-verification/phase4-installer-post-close.png`
+- `artifacts/vm-verification/phase4c-installer-disk-selection.png`
+- `artifacts/vm-verification/phase4c-installer-summary-before-install.png`
+- `artifacts/vm-verification/phase4c-install-progress.png`
+- `artifacts/vm-verification/phase4c-install-complete.png`
+- `artifacts/vm-verification/phase4c-install-after-unlock-53m.png`
+- `artifacts/vm-verification/phase4c-installed-boot-90s.png`
+- `artifacts/vm-verification/phase4c-installed-boot-5m.png`
+- `artifacts/vm-verification/phase4c-installed-boot-10m-check.png`
 
 ## Result
 
-Phase 4 is `installer-open verified`.
+Phase 4 is `partial success`.
 
 What is proven:
 
@@ -167,10 +213,12 @@ What is proven:
 - The GUI VirtualBox path still reaches a visible KDE plus Lotus Shell state.
 - The KDE application launcher can be opened in the live session even with Lotus Shell covering the desktop.
 - The `Install LotusOS` launcher appears on-screen and opens Calamares.
-- Calamares opens to a LotusOS-branded welcome window without any disposable install disk attached.
+- Calamares opens to a LotusOS-branded welcome window.
+- Calamares sees and can target only the newly created disposable `25.00 GiB` VDI.
+- The disposable-disk install run completes to the Calamares `All done.` finish screen.
 
 What is not yet proven:
 
-- any safe disposable-disk install run
+- a clean installed-system graphical boot to a visible greeter or desktop in VirtualBox
 
-Phase 4 should still not be treated as complete until a disposable-disk install run is explicitly approved and verified.
+Phase 4 should still not be treated as complete until the installed system boots cleanly from the disposable disk in a reproducible way.
