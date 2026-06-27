@@ -4,13 +4,28 @@ set -euo pipefail
 iso_path="${1:-artifacts/lotusos-amd64.iso}"
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 iso_file="$repo_root/$iso_path"
-work_dir="/tmp/lotusos-iso-verify"
-out_file="$repo_root/artifacts/vm-verification/phase5d-iso-shell-paths.txt"
+timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+work_dir="$(mktemp -d /tmp/lotusos-iso-verify.XXXXXX)"
+out_arg="${2:-}"
+
+if [[ -n "$out_arg" ]]; then
+  case "$out_arg" in
+    /*)
+      out_file="$out_arg"
+      ;;
+    *)
+      out_file="$repo_root/$out_arg"
+      ;;
+  esac
+else
+  out_file="$repo_root/artifacts/verification/iso-contents-$timestamp.txt"
+fi
+
+trap 'rm -rf -- "$work_dir"' EXIT
 
 [[ -f "$iso_file" ]] || { echo "Missing ISO: $iso_file" >&2; exit 1; }
 
-rm -rf -- "$work_dir"
-mkdir -p "$work_dir"
+mkdir -p "$work_dir" "$(dirname -- "$out_file")"
 cd "$work_dir"
 
 xorriso -osirrox on -indev "$iso_file" -extract /live/filesystem.squashfs filesystem.squashfs

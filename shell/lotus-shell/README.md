@@ -11,17 +11,21 @@ It is not the operating system. It should become the calm front door for AI-nati
 - Notes.
 - Files.
 - AI Hub placeholder.
-- Settings placeholder.
+- Settings read-only system overview.
 
 ## Current Status
 
-This directory now contains the minimal Lotus Shell Phase 3 scaffold:
+This directory contains the preview Lotus Shell implementation:
 
 - Tauri.
 - React.
 - TypeScript.
 - Rust.
-- Placeholder screens for Home, Projects, Notes, Files, AI Hub, and Settings.
+- A Home dashboard.
+- Bounded local resource surfaces for Projects, Notes, and Files.
+- Local app launcher surfaces.
+- AI Hub as a placeholder-only surface.
+- Settings as a read-only local system overview, not a full settings backend.
 
 The ISO build script packages the release binary into the live image at `/opt/lotus-shell/lotus-shell`. The KDE live session also includes a desktop launcher and an autostart entry so Lotus Shell opens automatically for verification.
 

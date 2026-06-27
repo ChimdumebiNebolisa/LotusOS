@@ -63,9 +63,9 @@ LotusOS is not:
 
 ## Branch Strategy
 
-- Preview closeout work is prepared on the current local branch and pushed to remote `phase-4-installer-integration`
-- Merge to `main` only after the preview docs, verification notes, and release notes match the verified state
-- Tag the preview release only after `main` contains the closeout docs
+- The preview closeout has been merged to `main` and tagged as `v0.1.0-preview`
+- Phase 10 work should branch from the current clean `main`
+- Keep VM stability changes small and evidence-led until the current blocker is reproduced clearly
 
 ## Verification Matrix
 
@@ -84,4 +84,4 @@ LotusOS is not:
 
 ## Immediate Next Step
 
-Ship the preview closeout: push the reconciled docs, merge into `main`, and tag the source/docs preview release.
+Begin Phase 10 VM stability preparation and verification from the current clean `main` baseline.
