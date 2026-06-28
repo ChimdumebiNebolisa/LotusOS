@@ -13,19 +13,90 @@ log() {
   printf '[%s] %s\n' "$(timestamp)" "$*"
 }
 
+is_live_session() {
+  if [ -e /run/live/medium ] || [ -e /lib/live/mount/medium ]; then
+    return 0
+  fi
+
+  if [ -r /proc/cmdline ] && grep -qw 'boot=live' /proc/cmdline; then
+    return 0
+  fi
+
+  return 1
+}
+
+write_kde_config() {
+  tool=$1
+  failed=false
+
+  for entry in "Autolock false" "LockOnResume false" "Timeout 0"; do
+    key=${entry% *}
+    value=${entry#* }
+    log "running: $tool --file kscreenlockerrc --group Daemon --key $key $value"
+    if "$tool" --file kscreenlockerrc --group Daemon --key "$key" "$value"; then
+      log "success: $tool $key=$value"
+    else
+      log "failed: $tool $key=$value"
+      failed=true
+    fi
+  done
+
+  if [ "$failed" = true ]; then
+    return 1
+  fi
+
+  return 0
+}
+
+configure_kde_locker() {
+  config_home=${XDG_CONFIG_HOME:-${HOME:-}/.config}
+
+  if [ "$config_home" = "/.config" ]; then
+    log "HOME is not set; skipping KDE screen locker config"
+    return 0
+  fi
+
+  mkdir -p "$config_home"
+
+  if command -v kwriteconfig6 >/dev/null 2>&1; then
+    log "disabling KDE screen locker with kwriteconfig6"
+    if write_kde_config kwriteconfig6; then
+      return 0
+    fi
+  fi
+
+  if command -v kwriteconfig5 >/dev/null 2>&1; then
+    log "disabling KDE screen locker with kwriteconfig5"
+    if write_kde_config kwriteconfig5; then
+      return 0
+    fi
+  fi
+
+  if [ ! -e "$config_home/kscreenlockerrc" ]; then
+    log "kwriteconfig is unavailable; writing minimal kscreenlockerrc fallback"
+    cat > "$config_home/kscreenlockerrc" <<'EOF'
+[Daemon]
+Autolock=false
+LockOnResume=false
+Timeout=0
+EOF
+    return 0
+  fi
+
+  log "kwriteconfig is unavailable and kscreenlockerrc exists; leaving existing file unchanged"
+}
+
 log "=== lotus live session keepawake start ==="
 log "DISPLAY=${DISPLAY-}"
+log "WAYLAND_DISPLAY=${WAYLAND_DISPLAY-}"
 log "XDG_SESSION_TYPE=${XDG_SESSION_TYPE-}"
 
-if ! command -v xset >/dev/null 2>&1; then
-  log "xset not available"
+if ! is_live_session; then
+  log "not a live session; exiting without changing user session settings"
   exit 0
 fi
 
-if [ -z "${DISPLAY-}" ]; then
-  log "DISPLAY is not set"
-  exit 0
-fi
+configure_kde_locker
 
 run_xset() {
   log "running: xset $*"
@@ -38,8 +109,12 @@ run_xset() {
   return 0
 }
 
-run_xset s off
-run_xset -dpms
-run_xset s noblank
+if command -v xset >/dev/null 2>&1 && [ -n "${DISPLAY-}" ]; then
+  run_xset s off
+  run_xset -dpms
+  run_xset s noblank
+else
+  log "xset unavailable or DISPLAY is not set; skipping X11 blanking fallback"
+fi
 
 log "=== lotus live session keepawake end ==="

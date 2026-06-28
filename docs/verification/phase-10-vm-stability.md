@@ -75,3 +75,36 @@ This phase should focus on repeatable evidence for the supported VirtualBox lane
 - Classification: `partial`
 - Evidence files: `artifacts/verification/iso-contents-20260628T004851Z.txt`; `artifacts/vm-verification/phase10b-baseline/phase10b-showvminfo-before.txt`; `artifacts/vm-verification/phase10b-baseline/phase10b-showvminfo-before-human.txt`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-20s.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-90s.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-5m.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-10m.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-after-wake-attempt.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-after-enter-unlock.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-showvminfo-after-black-screen.txt`; `artifacts/vm-verification/phase10b-baseline/phase10b-showvminfo-after-poweroff.txt`
 - Remaining uncertainty: Calamares launch, disposable VDI target confirmation, install completion, post-install boot, SDDM, installed Plasma, and installed Lotus Shell were not tested in this Phase 10B run because live-session stability failed before the installer step. Hardware installation remains unverified.
+
+## Phase 10C Live Idle Stability Fix
+
+Changed:
+
+- Strengthened `os/live-build/config/includes.chroot/usr/local/bin/lotus-live-session-keepawake`.
+- The helper now exits unless it detects a live session through `/run/live/medium`, `/lib/live/mount/medium`, or `boot=live` in `/proc/cmdline`.
+- In live sessions, the helper disables KDE screen locking for the current live user by setting `Autolock=false`, `LockOnResume=false`, and `Timeout=0` in `kscreenlockerrc` through `kwriteconfig6` or `kwriteconfig5` when available.
+- The existing `xset s off`, `xset -dpms`, and `xset s noblank` fallback remains for sessions where X11 `DISPLAY` is available.
+- Updated the keepawake autostart desktop entry comment to reflect screen locking as well as blanking and DPMS.
+
+Why this targets Phase 10B:
+
+- Phase 10B reached KDE Plasma and Lotus Shell at `5m`, then degraded to a black screen by `10m`.
+- The wake attempt reached a KDE lock screen, so disabling the live-session KDE locker is the smallest first target before changing graphics packages or VirtualBox settings.
+
+What this does not claim:
+
+- This does not claim to fix the earlier `vmwgfx` graphics-console errors.
+- This does not claim live boot, Calamares launch, install completion, installed boot, SDDM, or installed Lotus Shell verification.
+- This does not claim hardware support.
+
+Installed-user impact:
+
+- The autostart entry is still present system-wide, but the helper exits without changing settings when the system is not booted as a live session.
+- No `/etc/skel` defaults were added, so this change is intended to affect the live verification session only.
+
+Must retest:
+
+- Rebuild the ISO so the updated helper is included.
+- Re-run the supported VirtualBox lane through at least the Phase 10B `10m` idle checkpoint.
+- If live session remains usable, continue to Calamares launch, disposable VDI target confirmation, install, post-install boot, SDDM, installed Plasma, and installed Lotus Shell checks.
+- Keep `vmwgfx` errors separately tracked unless a later test directly proves they are resolved.

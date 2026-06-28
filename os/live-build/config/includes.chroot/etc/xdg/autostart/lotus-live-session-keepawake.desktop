@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=LotusOS Live Session Keepawake
-Comment=Disable X11 blanking and DPMS in the live session
+Comment=Disable live-session screen locking, blanking, and DPMS during verification
 Exec=/bin/sh /usr/local/bin/lotus-live-session-keepawake
 Icon=preferences-desktop-display
 Terminal=false
