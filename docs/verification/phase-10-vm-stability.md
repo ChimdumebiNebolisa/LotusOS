@@ -58,10 +58,10 @@ This phase should focus on repeatable evidence for the supported VirtualBox lane
 
 ## Result
 
-- Date:
-- Tester:
-- ISO path:
-- ISO checksum:
+- Date: `2026-06-27` America/Chicago
+- Tester: `ChimdumebiNebolisa`
+- ISO path: `artifacts/lotusos-amd64.iso`
+- ISO checksum: `SHA256 499fe4671d79a99dd7838ac1d9e5fb87eb2355eb158b2e215f92e73fde0b8719`
 - VM name:
 - VM settings:
 - Disposable VDI path:
@@ -73,5 +73,5 @@ This phase should focus on repeatable evidence for the supported VirtualBox lane
 - Post-install boot result:
 - Post-install Lotus Shell result:
 - Classification:
-- Evidence files:
+- Evidence files: `artifacts/verification/iso-contents-20260628T004851Z.txt`
 - Remaining uncertainty:
