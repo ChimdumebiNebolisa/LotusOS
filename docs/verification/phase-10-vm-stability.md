@@ -1,6 +1,6 @@
 # Phase 10: VM Stability Verification
 
-Status: preparation only. No Phase 10 VM result is recorded yet.
+Status: Phase 10A build baseline recorded. Phase 10B VirtualBox baseline is `partial`.
 
 ## Purpose
 
@@ -62,16 +62,16 @@ This phase should focus on repeatable evidence for the supported VirtualBox lane
 - Tester: `ChimdumebiNebolisa`
 - ISO path: `artifacts/lotusos-amd64.iso`
 - ISO checksum: `SHA256 499fe4671d79a99dd7838ac1d9e5fb87eb2355eb158b2e215f92e73fde0b8719`
-- VM name:
-- VM settings:
-- Disposable VDI path:
-- Live boot result:
-- Lotus Shell live-session result:
-- Calamares launch result:
-- Install target confirmation:
-- Install result:
-- Post-install boot result:
-- Post-install Lotus Shell result:
-- Classification:
-- Evidence files: `artifacts/verification/iso-contents-20260628T004851Z.txt`
-- Remaining uncertainty:
+- VM name: `LotusOS-Phase10B-Baseline`
+- VM settings: VirtualBox `7.2.8r173730` GUI frontend; OS type `Debian (64-bit)`; `4096 MB` RAM; `2` CPUs; `128 MB` VRAM; `VMSVGA`; 3D acceleration `on`; boot order DVD then disk; ISO attached at SATA port 1
+- Disposable VDI path: `C:\Users\Chimdumebi\VirtualBox VMs\LotusOS-Phase10B-Baseline\LotusOS-Phase10B-Baseline.vdi`
+- Live boot result: `partial`; GRUB/boot handoff showed `Booting 'LotusOS Live'` at `20s`, the live boot showed `vmwgfx` graphics-console errors at `90s`, KDE Plasma recovered by `5m`, then the session degraded to a black screen by `10m`
+- Lotus Shell live-session result: `partial`; Lotus Shell autostarted and showed the Home dashboard at `5m`, but did not remain usable through the `10m` idle checkpoint
+- Calamares launch result: not attempted because the live session degraded to black screen and then lock screen before safe installer navigation
+- Install target confirmation: not reached
+- Install result: not run
+- Post-install boot result: not run
+- Post-install Lotus Shell result: not run
+- Classification: `partial`
+- Evidence files: `artifacts/verification/iso-contents-20260628T004851Z.txt`; `artifacts/vm-verification/phase10b-baseline/phase10b-showvminfo-before.txt`; `artifacts/vm-verification/phase10b-baseline/phase10b-showvminfo-before-human.txt`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-20s.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-90s.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-5m.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-10m.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-after-wake-attempt.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-live-after-enter-unlock.png`; `artifacts/vm-verification/phase10b-baseline/phase10b-showvminfo-after-black-screen.txt`; `artifacts/vm-verification/phase10b-baseline/phase10b-showvminfo-after-poweroff.txt`
+- Remaining uncertainty: Calamares launch, disposable VDI target confirmation, install completion, post-install boot, SDDM, installed Plasma, and installed Lotus Shell were not tested in this Phase 10B run because live-session stability failed before the installer step. Hardware installation remains unverified.
