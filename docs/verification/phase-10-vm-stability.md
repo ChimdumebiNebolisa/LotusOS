@@ -1,6 +1,6 @@
 # Phase 10: VM Stability Verification
 
-Status: Phase 10A build baseline recorded. Phase 10B VirtualBox baseline is `partial`.
+Status: Phase 10A build baseline recorded. Phase 10B VirtualBox baseline is `partial`. Phase 10D keepawake retest is `partial`.
 
 ## Purpose
 
@@ -108,3 +108,28 @@ Must retest:
 - Re-run the supported VirtualBox lane through at least the Phase 10B `10m` idle checkpoint.
 - If live session remains usable, continue to Calamares launch, disposable VDI target confirmation, install, post-install boot, SDDM, installed Plasma, and installed Lotus Shell checks.
 - Keep `vmwgfx` errors separately tracked unless a later test directly proves they are resolved.
+
+## Phase 10D Keepawake Retest
+
+- Date: `2026-06-28` America/Chicago
+- Tester: `ChimdumebiNebolisa`
+- Rebuilt ISO path: `artifacts/lotusos-amd64.iso`
+- Rebuilt ISO checksum: `SHA256 69eeb3a7bd6f139688a9b92c49428061394ad468a0ae087ff0499117c9199ae6`
+- ISO contents evidence: `artifacts/verification/iso-contents-20260628T055625Z.txt`
+- Keepawake inclusion: confirmed in the rebuilt ISO at `squashfs-root/usr/local/bin/lotus-live-session-keepawake` and `squashfs-root/etc/xdg/autostart/lotus-live-session-keepawake.desktop`
+- Evidence directory: `artifacts/vm-verification/phase10d-keepawake-retest/`
+- VM name: `LotusOS-Phase10D-Keepawake-Retest`
+- VM settings: VirtualBox `7.2.8r173730` GUI frontend; OS type `Debian (64-bit)`; `4096 MB` RAM; `2` CPUs; `128 MB` VRAM; `VMSVGA`; 3D acceleration `on`; boot order DVD then disk; ISO attached at SATA port 1
+- Disposable VDI path: `C:\Users\Chimdumebi\VirtualBox VMs\LotusOS-Phase10D-Keepawake-Retest\LotusOS-Phase10D-Keepawake-Retest.vdi`
+- Live boot result: `partial`; `Booting 'LotusOS Live'` was visible at the early boot checkpoint, `vmwgfx` unsupported-hypervisor graphics-console errors still appeared during boot, KDE Plasma reached the graphical session, and Lotus Shell autostarted by the later live-session checkpoint
+- Lotus Shell live-session result: `partial`; Lotus Shell was visible in the live session around the `8m` capture, but the display was black again at the `10m` and `12m` checkpoints
+- Ten-minute black screen/lock result: not fixed; black-screen behavior recurred by the `10m` checkpoint. A KDE lock screen was not separately confirmed in this run because no wake/unlock attempt was made.
+- `vmwgfx` result: persisted; the keepawake change did not resolve the graphics-console warning path
+- Calamares launch result: not attempted because the live session was black at the `10m` and `12m` checkpoints and was not safe for installer navigation
+- Install target confirmation: not reached
+- Install result: not run
+- Post-install boot result: not run
+- Post-install Lotus Shell result: not run
+- Classification: `partial`
+- Evidence files: `artifacts/vm-verification/phase10d-keepawake-retest/vbox-settings.txt`; `artifacts/vm-verification/phase10d-keepawake-retest/vbox-settings-machinereadable.txt`; `artifacts/vm-verification/phase10d-keepawake-retest/phase10d-20s.png`; `artifacts/vm-verification/phase10d-keepawake-retest/phase10d-90s.png`; `artifacts/vm-verification/phase10d-keepawake-retest/phase10d-midway-before-5m.png`; `artifacts/vm-verification/phase10d-keepawake-retest/phase10d-5m.png`; `artifacts/vm-verification/phase10d-keepawake-retest/phase10d-8m.png`; `artifacts/vm-verification/phase10d-keepawake-retest/phase10d-10m.png`; `artifacts/vm-verification/phase10d-keepawake-retest/phase10d-12m.png`; `artifacts/vm-verification/phase10d-keepawake-retest/VBox.log`; `artifacts/vm-verification/phase10d-keepawake-retest/vbox-final-before-poweroff.txt`; `artifacts/vm-verification/phase10d-keepawake-retest/vbox-final-after-poweroff.txt`
+- Remaining uncertainty: Calamares launch, disposable VDI target confirmation, install completion, post-install boot, SDDM, installed Plasma, installed Lotus Shell, and hardware installation remain unverified in Phase 10D.
