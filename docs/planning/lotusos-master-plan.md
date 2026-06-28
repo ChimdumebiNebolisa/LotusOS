@@ -84,4 +84,4 @@ LotusOS is not:
 
 ## Immediate Next Step
 
-Begin Phase 10 VM stability preparation and verification from the current clean `main` baseline.
+Resume Phase 10 from branch `phase-10-vm-stability` at commit `9bb474f`. The supported VirtualBox lane remains `partial` after the Phase 10D keepawake retest: the rebuilt ISO includes the live-session keepawake fix, but the VM still reaches a black screen around the `10m` checkpoint and `vmwgfx` graphics-console errors persist. The next task is Phase 10E graphics/session lane comparison, not Lotus Shell feature work or release polish.

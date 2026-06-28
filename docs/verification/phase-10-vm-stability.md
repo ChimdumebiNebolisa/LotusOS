@@ -8,6 +8,32 @@ Phase 10 is for reducing uncertainty around LotusOS VM stability before expandin
 
 This phase should focus on repeatable evidence for the supported VirtualBox lane, especially the graphics/session instability seen during earlier live and installer verification. Do not treat Phase 10 as a broad feature phase.
 
+## Current Stopping Point
+
+- LotusOS is paused on branch `phase-10-vm-stability`.
+- Latest Phase 10 commit: `9bb474f` (`docs: record phase 10 keepawake retest`).
+- Latest rebuilt Phase 10D ISO checksum: `SHA256 69eeb3a7bd6f139688a9b92c49428061394ad468a0ae087ff0499117c9199ae6`.
+- Supported VirtualBox lane status: `partial`, not `pass`.
+- The live-session keepawake and lock-disabling fix was included in the rebuilt ISO, but it did not resolve the black-screen behavior around the `10m` checkpoint.
+- `vmwgfx` and VirtualBox graphics-console errors persisted.
+- KDE Plasma and Lotus Shell can appear in the live session, but the supported VirtualBox lane still degrades to black screen around the `10m` checkpoint.
+- Calamares launch, install target confirmation, install completion, post-install boot, SDDM, installed Plasma, installed Lotus Shell, and hardware install remain unverified for Phase 10.
+- Next task: graphics/session investigation, not feature work.
+
+Recommended resume task:
+
+- Phase 10E should compare VirtualBox graphics/session lanes before further ISO-side changes.
+- Suggested lanes: `VMSVGA` + 3D `off`; `VBoxSVGA` + 3D `off`; optional QEMU smoke boot for comparison.
+- If alternate VM settings do not isolate the issue, inspect KDE session type, Wayland/X11 behavior, guest graphics packages, and `VBox.log`.
+
+Do not do next:
+
+- Do not start AI Hub.
+- Do not expand Lotus Shell features.
+- Do not do branding polish.
+- Do not claim `v0.1.0` is stable.
+- Do not debug randomly without preserving evidence.
+
 ## Baseline Repo State
 
 - Branch: `phase-10-vm-stability`
