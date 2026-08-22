@@ -110,7 +110,10 @@ impl Engine {
                     .as_ref()
                     .map(|s| s.state.clone())
                     .unwrap_or_else(|| "off".into());
-                let alive = status.as_ref().map(|s| s.fresh()).unwrap_or(false);
+                let alive = status
+                    .as_ref()
+                    .map(|s| s.fresh() && !matches!(s.state.as_str(), "off" | "failed"))
+                    .unwrap_or(false);
                 let manifest_hash = Manifest::load(&PathBuf::from(&ws.root).join("lotus.toml"))
                     .ok()
                     .map(|(m, _)| m.hash);

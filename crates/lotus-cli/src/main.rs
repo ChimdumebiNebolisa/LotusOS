@@ -98,14 +98,8 @@ fn cmd_add(engine: &Engine, args: &[String]) -> Result<(), LotusError> {
     }
 
     // Parse first so the trust decision is based on validated content.
-    let (key, manifest) = engine.manifest_for_review(
-        root.canonicalize()
-            .map_err(|_| LotusError::NotFound("cannot resolve directory".into()))?
-            .to_str()
-            .ok_or_else(|| LotusError::State("path not representable".into()))?,
-    )?;
-    let _ = key;
-
+    let (manifest, _hash) =
+        Manifest::load(&root.join("lotus.toml")).map_err(LotusError::from)?;
     print_trust_summary(&manifest);
 
     let granted = if trust {
