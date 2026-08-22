@@ -1,0 +1,7 @@
+version = 99
+name = "future"
+description = "Intentionally invalid: unsupported schema version."
+
+[[process]]
+name = "main"
+command = "true"

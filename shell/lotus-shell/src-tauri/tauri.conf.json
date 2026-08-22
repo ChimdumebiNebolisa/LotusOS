@@ -1,11 +1,11 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Lotus Shell",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.lotusos.shell",
   "build": {
-    "beforeDevCommand": "npm run dev -- --host 0.0.0.0 --port 1420",
-    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev -- --port 1420",
+    "devUrl": "http://127.0.0.1:1420",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Lotus Shell - LotusOS Preview",
+        "title": "Lotus Shell - LotusOS",
         "width": 1280,
         "height": 820,
         "resizable": true

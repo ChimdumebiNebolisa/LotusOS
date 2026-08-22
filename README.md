@@ -1,189 +1,92 @@
 # LotusOS
 
-## What this is
+**LotusOS is a local-first developer workspace runtime.** It defines, starts,
+supervises, diagnoses, stops, and restores the operating context of a software
+project as **one coherent workspace**.
 
-LotusOS is a custom Debian-based Linux live/installable ISO with a Tauri + React + Rust shell called Lotus Shell. It boots into KDE Plasma, autostarts Lotus Shell, and includes a Calamares installer that has been verified on disposable VirtualBox VDIs. The current preview is a source-and-docs milestone for a local-first workspace OS, not a production hardware release.
+A development project is more than a folder. It has processes, ports,
+environment requirements, logs, health conditions, Git state, and a lifecycle.
+LotusOS lets you declare that context once in a versioned `lotus.toml` file and
+then operate it as a unit — from a CLI (`lotus`) or the Lotus Shell desktop app.
 
-## Problem it solves
+- No AI, LLMs, or model providers required
+- No cloud services, accounts, or external SaaS APIs
+- No telemetry; all state lives under your own user profile
+- V1 is Windows-first with an explicit platform adapter for Linux/macOS later
 
-LotusOS explores how to turn a normal Linux base into a focused, calm, local-first workspace OS without writing a custom kernel or bootloader from scratch. Instead of leaving users in a generic desktop with scattered entry points, it adds a first-run home surface, local system context, app launchers, and bounded project and resource areas on top of a standard Debian + KDE base.
+## Quick start
 
-## Demo
+Prerequisites: [Rust](https://rustup.rs) 1.85+ (stable) on Windows 10/11.
 
-![LotusOS live desktop with Lotus Shell](docs/assets/readme/lotusos-live-desktop.png)
-
-![Lotus Shell Home dashboard](docs/assets/readme/lotus-shell-home.png)
-
-![Lotus Shell Settings system overview](docs/assets/readme/lotus-shell-settings.png)
-
-![LotusOS installer completion](docs/assets/readme/lotusos-installer.png)
-
-## Screenshots
-
-| Screenshot | Evidence |
-| --- | --- |
-| Live desktop | ![LotusOS live desktop](docs/assets/readme/lotusos-live-desktop.png) |
-| Home dashboard | ![Lotus Shell Home dashboard](docs/assets/readme/lotus-shell-home.png) |
-| Settings overview | ![Lotus Shell Settings overview](docs/assets/readme/lotus-shell-settings.png) |
-| Installer completion | ![LotusOS installer completion](docs/assets/readme/lotusos-installer.png) |
-
-Installed-system boot, SDDM, and post-login Lotus Shell were manually verified for Phase 5F, but no additional installed-desktop screenshot is curated in this README set.
-
-## How it works and how to use
-
-1. Build the ISO through Debian `live-build`.
-2. Boot the ISO in VirtualBox.
-3. KDE Plasma starts in the live session.
-4. Lotus Shell autostarts.
-5. Calamares can install the image to a disposable VDI.
-6. The installed system boots into SDDM and Plasma.
-7. Lotus Shell autostarts again after installed login.
-
-## Features
-
-- Debian-based live ISO
-- KDE Plasma desktop
-- Lotus Shell autostart
-- Polished Home dashboard
-- Read-only system snapshot
-- Settings system overview
-- Local app launcher surface
-- Local resource and project cards
-- Calamares installer integration
-- Disposable VDI install verification
-- Local-first scope
-- No bundled AI credentials
-
-## Tech stack and architecture
-
-```mermaid
-flowchart TD
-    A[Debian live-build] --> B[LotusOS ISO]
-    B --> C[KDE Plasma live session]
-    C --> D[Lotus Shell autostart]
-    D --> E[Tauri shell]
-    E --> F[React UI]
-    E --> G[Rust backend commands]
-    B --> H[Calamares installer]
-    H --> I[Disposable VDI install]
-    I --> J[Installed LotusOS desktop]
-```
-
-- Debian `live-build`
-- KDE Plasma
-- Calamares
-- Tauri
-- React
-- TypeScript
-- Rust
-- VirtualBox verification
-
-## Detailed setup instructions
-
-### Prerequisites
-
-Use Linux or WSL2 Ubuntu for ISO work. The OS build scripts are Bash scripts and are not intended to run directly in PowerShell.
-
-```bash
-sudo apt update
-sudo apt install live-build qemu-system-x86 xorriso isolinux syslinux-common squashfs-tools
-sudo apt install nodejs npm cargo rustc libgtk-3-dev libwebkit2gtk-4.1-dev librsvg2-dev
-```
-
-If the distro Rust toolchain is too old for the Tauri packaging path, install a current stable Rust toolchain with `rustup`.
-
-### Clone the repo
-
-```bash
+```powershell
 git clone https://github.com/ChimdumebiNebolisa/LotusOS.git
 cd LotusOS
+cargo build -p lotus-cli -p lotus-core
 ```
 
-### Shell dependency install
+Try the demo workspace:
 
-```bash
-cd shell/lotus-shell
-npm install
+```powershell
+# register + review + trust decision in one step
+.\target\debug\lotus.exe add fixtures\demo-workspace --trust
+
+.\target\debug\lotus.exe start demo      # OFF -> STARTING -> HEALTHY
+.\target\debug\lotus.exe status demo     # processes, health, PIDs, restarts
+.\target\debug\lotus.exe doctor demo     # environment diagnostics
+.\target\debug\lotus.exe logs demo       # timestamped, per-stream logs
+.\target\debug\lotus.exe stop demo       # graceful, then forced after grace
 ```
 
-### Local shell build
+Or run the scripted end-to-end smoke test:
 
-```bash
-cd shell/lotus-shell
-npm run build
+```powershell
+powershell -File scripts\smoke-e2e.ps1
 ```
 
-### Tauri build and checks
+## The lifecycle
 
-```bash
-cd shell/lotus-shell/src-tauri
-cargo check
-cd ..
-npm run tauri build -- --no-bundle
+```text
+OFF -> STARTING -> HEALTHY -> STOPPING -> OFF
+                 |             |
+                 +-> DEGRADED -+
+                       |
+                       v
+                     FAILED
 ```
 
-### ISO build from WSL/Linux
+Every transition is deterministic and recorded in a local event ledger.
+See [docs/lifecycle.md](docs/lifecycle.md).
 
-Repository-root dependency check:
+## What's here
 
-```bash
-bash os/scripts/build-iso.sh --check
-```
+| Path | Contents |
+|---|---|
+| `crates/lotus-core` | The engine: manifest parsing, trust store, process supervisor, health checks, port diagnostics, doctor, logs, git context, checkpoints, event ledger |
+| `crates/lotus-cli` | The `lotus` command-line interface |
+| `shell/lotus-shell` | Lotus Shell desktop app (Tauri) built on the same engine |
+| `fixtures/` | Demo and intentionally-invalid workspaces for testing |
+| `scripts/smoke-e2e.ps1` | Scripted end-to-end verification |
 
-Build the ISO:
+## Documentation
 
-```bash
-bash os/scripts/build-iso.sh
-```
+- [`docs/architecture.md`](docs/architecture.md) — components and data flow
+- [`docs/lotus-toml-spec.md`](docs/lotus-toml-spec.md) — manifest schema v1
+- [`docs/trust-model.md`](docs/trust-model.md) — why and how trust is explicit
+- [`docs/lifecycle.md`](docs/lifecycle.md) — states, transitions, semantics
+- [`docs/cli.md`](docs/cli.md) — every command and exit codes
+- [`docs/checkpoints.md`](docs/checkpoints.md) — what restore honestly does
+- [`docs/platform-support.md`](docs/platform-support.md) — what works where
+- [`docs/testing.md`](docs/testing.md) — how this repo is verified
+- [`docs/migration.md`](docs/migration.md) — from the old OS-image product
+- [`docs/archive/os-image-era/`](docs/archive/os-image-era/) — historical record of the retired Debian/ISO product
 
-WSL root build with user `rustup` paths exported:
+## Status
 
-```bash
-wsl.exe -u root -- /usr/bin/bash -c 'export CARGO_HOME=/home/<user>/.cargo RUSTUP_HOME=/home/<user>/.rustup PATH="/home/<user>/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; cd /mnt/c/Users/Chimdumebi/LotusOS && bash os/scripts/build-iso.sh'
-```
-
-### ISO content verification
-
-```bash
-wsl.exe -u root -- /usr/bin/bash os/scripts/verify-iso-contents.sh
-```
-
-### VirtualBox boot testing
-
-Primary supported VirtualBox lane:
-
-- OS type: Debian 64-bit
-- RAM: `4096 MB`
-- CPUs: `2`
-- VRAM: `128 MB`
-- Graphics controller: `VMSVGA`
-- 3D acceleration: `on`
-
-Optional QEMU smoke boot:
-
-```bash
-bash os/scripts/test-qemu.sh artifacts/lotusos-amd64.iso
-```
-
-## Testing
-
-- `cd shell/lotus-shell && npm run build`
-- `cd shell/lotus-shell/src-tauri && cargo check`
-- `cd shell/lotus-shell && npm run tauri build -- --no-bundle`
-- `wsl.exe -u root -- /usr/bin/bash os/scripts/verify-iso-contents.sh`
-- VirtualBox live ISO verification
-- Disposable VDI install verification
-
-## Known limitations
-
-- VirtualBox graphics and session instability has appeared in some timed runs, even in the supported `VMSVGA` + 3D `on` lane.
-- Hardware installation is not verified.
-- ISO and VDI artifacts are not committed to git.
-- AI Hub is placeholder/local-first only.
-- No cloud sync or auth.
-- No production release guarantees.
-- Phase 5F installed-system verification is manually verified after an automated Calamares run was blocked by a live-session lock.
+V0.2.0 — scaffolded and tested on Windows. Verified capabilities are recorded
+in [`docs/testing.md`](docs/testing.md); anything not listed there has not been
+verified. Do not assume Linux/macOS support until it appears in the platform
+support matrix.
 
 ## License
 
-MIT. See [LICENSE](C:/Users/Chimdumebi/LotusOS/LICENSE).
+MIT. See [LICENSE](LICENSE).

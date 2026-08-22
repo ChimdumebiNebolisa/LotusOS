@@ -1,74 +1,88 @@
 # LotusOS Architecture
 
-## Base System
+## Product shape
 
-LotusOS starts as a Debian 13 `trixie` live ISO built with `live-build`.
+LotusOS is a local-first developer workspace runtime. One core engine
+(`lotus-core`) implements all workspace behavior; two frontends share it:
 
-The first target architecture is `amd64`. The package manager is `apt`. The init system remains `systemd`.
+```text
+                lotus.toml (workspace, on disk)
+                        |
+                        v
+  +----------------- lotus-core -----------------+
+  | manifest  trust  supervisor  health  ports   |
+  | doctor    logs   gitctx      ledger registry |
+  | checkpoint          platform adapter          |
+  +-------------------+--------------+------------+
+                      |              |
+             crates/lotus-cli   shell/lotus-shell (Tauri)
+             (`lotus` binary)     React UI over commands
+```
 
-## Desktop Layer
+There is exactly one implementation of every behavior. The CLI and the desktop
+app cannot diverge because neither contains domain logic.
 
-The first desktop target is KDE Plasma.
+## Component responsibilities
 
-KDE Plasma is chosen for the preview because it provides a polished desktop, SDDM integration, theming hooks, and enough customization surface for LotusOS branding without building a new desktop environment.
+| Module | Responsibility |
+|---|---|
+| `manifest` | Parse/validate `lotus.toml` v1; reject unknown fields; compute content hash; resolve dependency order (Kahn) and detect cycles |
+| `trust` | Trust store keyed by canonical workspace root; records trusted manifest hash; detects material changes |
+| `registry` | Registered workspaces (name, root, added-at) |
+| `supervisor` | Dependency-ordered spawn, health polling, restart policy with budget/backoff, graceful-then-forced shutdown, crash classification, heartbeat status file, lock file, orphan cleanup |
+| `health` | Bounded checks: TCP connect, plain-HTTP GET, path exists, command probe |
+| `ports` | Listener discovery via platform adapter; conflict reports with remediation; never kills to free a port |
+| `doctor` | Read-only environment diagnostics; distinguishes ok / missing / invalid / unverified / conflict |
+| `logs` | Per-process `.out.log` / `.err.log` with timestamped lines and size-capped rotation |
+| `gitctx` | Local-only git reads: branch, commit, dirty, ahead/behind from existing tracking refs |
+| `ledger` | Append-only JSONL event history per workspace with rotation |
+| `checkpoint` | Metadata snapshot (manifest hash, git position, process set, last state); drift computation |
+| `platform` | The only OS-aware layer: executable resolution (PATH/PATHEXT), listener tables, PID identity tokens, tree termination |
+| `engine` | Facade used by both frontends: add/list/start/stop/restart/status/doctor/logs/events/checkpoint/restore/trust |
 
-## Verified Preview Shape
+## Control plane
 
-The current preview milestone is a Debian-based live/installable OS image that boots into KDE Plasma, autostarts Lotus Shell in the live session, and installs through Calamares onto a disposable VirtualBox VDI. Phase 5E live-session verification is complete, and Phase 5F installed-system verification is recorded as manual follow-up verification after an automated attempt was blocked by a live-session lock.
+Supervision is file-based so it works identically whether the supervisor runs as
+a detached CLI child or an in-process thread in the desktop app:
 
-## OS Build Track
+```text
+<LOTUS_HOME>/runtime/<key>/status.json    heartbeat written every ~250 ms tick
+<LOTUS_HOME>/runtime/<key>/control.json   stop requests from any frontend
+<LOTUS_HOME>/runtime/<key>/supervisor.lock  created exclusively; stale lock = dead supervisor
+```
 
-The OS build track lives under `os/`:
+Readers treat a status older than 6 s as a **stale heartbeat** — that is how a
+crashed LotusOS process is detected while workspace processes keep running.
+Recovery kills recorded PIDs only after verifying each PID's platform identity
+token (Windows creation FILETIME, Linux `/proc` starttime), never by PID alone.
 
-- `os/live-build/`: Debian `live-build` config, auto wrappers, and hooks
-- `os/branding/`: source locations for GRUB, Plymouth, wallpaper, icons, SDDM, and desktop theme assets
-- `os/packages/`: package list drafts and tool selection notes
-- `os/scripts/`: safe entrypoints for build, QEMU test, ISO verification, and cleanup
+## State ownership
 
-Generated ISO, VDI, screenshot, and VM-log artifacts go under `artifacts/` and are not treated as source.
+| Data | Location | Writer |
+|---|---|---|
+| Manifest | `<workspace>/lotus.toml` | the developer |
+| Registry, trust store | `LOTUS_HOME/*.json` | engine on explicit user action |
+| Runtime heartbeats, control | `LOTUS_HOME/runtime/<key>/` | supervisor only |
+| Logs | `LOTUS_HOME/logs/<key>/` | log-reader threads |
+| Event ledger | `LOTUS_HOME/ledger/<key>/events.jsonl` | engine + supervisor |
+| Checkpoints | `LOTUS_HOME/checkpoints/<key>/*.json` | engine |
 
-## Lotus Shell Track
+`LOTUS_HOME` defaults to `%LOCALAPPDATA%\LotusOS` on Windows (XDG equivalent
+elsewhere) and can be overridden for tests.
 
-Lotus Shell lives under `shell/lotus-shell/`.
+## Trust boundary
 
-The implementation track is Tauri + React + TypeScript + Rust. Its current surfaces are:
+Executable definitions come from repositories, which may be hostile. The rule:
 
-- Home with read-only session context
-- Projects, Notes, and Files with bounded local resource cards
-- AI Hub placeholder
-- Settings with read-only local system overview
+**No process is ever spawned from a workspace that has not been explicitly
+trusted at its current manifest hash.**
 
-Local launcher and resource surfaces are allowlisted and local-only. Real AI integration is intentionally deferred. The AI Hub does not ship with bundled API keys or cloud-only assumptions.
+Any byte change to `lotus.toml` invalidates trust until re-approved. Details:
+[trust-model.md](trust-model.md).
 
-The live image packages the Lotus Shell Linux binary into `/opt/lotus-shell/lotus-shell`, installs a desktop launcher, and uses an XDG autostart wrapper so the KDE session can either launch Lotus Shell or record a visible startup failure.
+## Deliberate non-goals
 
-## Installer Track
-
-Calamares is the graphical installer.
-
-The live image wires Calamares through Debian's `calamares-settings-debian` package with minimal LotusOS overrides for branding, launcher text, and install confirmation behavior.
-
-Phase 4 install verification is recorded in `docs/verification/phase-4-installer-integration.md`. Phase 5E live verification is complete on the rebuilt ISO, and Phase 5F installed verification is complete as manual user follow-up after the blocked automation attempt.
-
-## Verification Architecture
-
-- Build verification: `docs/verification/phase-5d-iso-rebuild.md`
-- Live-session verification: `docs/verification/phase-5e-live-shell-verification.md`
-- Installed-system verification: `docs/verification/phase-5f-installed-shell-verification.md`
-
-This repo intentionally distinguishes:
-
-- packaged into the ISO
-- verified in the live session
-- verified in the installed system
-- manually verified versus fully reproduced by automation
-
-## Security And Privacy Guardrails
-
-- Local-first by default
-- No bundled AI credentials
-- No hidden telemetry
-- No custom privileged background services before a clear need exists
-- Use Debian package sources by default
-- Document any non-Debian repository before adding it to the image
-- Do not claim hardware installation support or production readiness without separate verification
+- No daemon manager, service installer, or system integration beyond user-level files
+- No remote/network features of any kind
+- No plugin/scripting DSL inside manifests
+- No AI/LLM dependencies anywhere in the stack

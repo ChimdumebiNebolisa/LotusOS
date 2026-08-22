@@ -1,0 +1,42 @@
+# Demo workspace for trying LotusOS end to end.
+#
+# Try it:
+#   lotus add fixtures/demo-workspace --trust
+#   lotus start demo
+#   lotus status demo
+#   lotus stop demo
+
+version = 1
+name = "demo"
+description = "Long-running demo process with restart policy and bounded shutdown."
+
+[env]
+required = []                      # add names here to require variables (values are never shown)
+
+[[process]]
+name = "sleeper"
+command = "ping"                   # resolved via PATH (Windows); swap for `sleep 600` on Linux
+args = ["-n", "600", "127.0.0.1"]
+
+[process.restart]
+policy = "on-failure"
+max_restarts = 3
+backoff_ms = 1000
+
+[process.shutdown]
+grace_secs = 2
+
+# Example of a TCP/HTTP health check against a real service:
+#
+# [[process]]
+# name = "web"
+# command = "node"
+# args = ["server.js"]
+# ports = [3000]
+#
+# [process.health]
+# port = 3000
+# http_path = "/healthz"           # plain-HTTP GET; expects status 200
+# interval_ms = 2000
+# timeout_ms = 4000
+# startup_grace_ms = 5000

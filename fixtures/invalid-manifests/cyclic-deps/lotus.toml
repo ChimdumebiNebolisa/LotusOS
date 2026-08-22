@@ -1,0 +1,13 @@
+version = 1
+name = "cyclic"
+description = "Intentionally invalid: a depends on b depends on a."
+
+[[process]]
+name = "a"
+command = "true"
+depends_on = ["b"]
+
+[[process]]
+name = "b"
+command = "true"
+depends_on = ["a"]

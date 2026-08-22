@@ -1,44 +1,34 @@
 # Lotus Shell
 
-Lotus Shell is the planned custom app/interface layer inside LotusOS.
+Lotus Shell is the desktop (Tauri) frontend of the LotusOS workspace runtime.
 
-It is not the operating system. It should become the calm front door for AI-native student/developer workflow.
+It has no domain logic of its own: every command it exposes is a thin wrapper
+over the shared engine in [`crates/lotus-core`](../../crates/lotus-core) — the
+same engine the `lotus` CLI uses. The UI makes the workspace lifecycle the
+central object: state, processes, health, ports, git context, doctor results,
+logs, events, checkpoints, and start/stop/restart controls.
 
-## MVP Screens
+## Surfaces
 
-- Home.
-- Projects.
-- Notes.
-- Files.
-- AI Hub placeholder.
-- Settings placeholder.
+- **Workspaces list** — registered workspaces with live state chips and trust/drift markers
+- **Workspace detail** — process table, port conflicts, doctor findings, recent events, log tail, checkpoint create/restore-with-drift-report
+- **Add flow** — inspect a `lotus.toml` before any trust decision, then register trusted or untrusted
 
-## Current Status
+## Development
 
-This directory now contains the minimal Lotus Shell Phase 3 scaffold:
+```powershell
+cd shell/lotus-shell
+npm install
+npm run dev          # frontend only (loopback Vite on :1420)
+npm run tauri dev    # full desktop app
+npm run build        # type-check + production bundle
+```
 
-- Tauri.
-- React.
-- TypeScript.
-- Rust.
-- Placeholder screens for Home, Projects, Notes, Files, AI Hub, and Settings.
+Requires the Rust workspace to build (`cargo build` from the repo root).
 
-The ISO build script packages the release binary into the live image at `/opt/lotus-shell/lotus-shell`. The KDE live session also includes a desktop launcher and an autostart entry so Lotus Shell opens automatically for verification.
+## Notes
 
-To build Lotus Shell as part of the ISO on WSL/Linux, the host needs:
-
-- `nodejs`
-- `npm`
-- `cargo`
-- `rustc`
-- `libgtk-3-dev`
-- `libwebkit2gtk-4.1-dev`
-- `librsvg2-dev`
-
-The current Tauri stack also needs Rust Edition 2024 support, so `cargo` and `rustc` must come from a current `rustup` stable toolchain rather than an older distro package set.
-
-## Guardrails
-
-- Do not implement real AI integrations before the OS boots reliably.
-- Do not bundle API keys.
-- Do not require a cloud account for the local app shell.
+- Outside the Tauri runtime the app renders an honest preview notice; it never
+  fakes local data.
+- Generated Tauri schemas under `src-tauri/gen/` are local build artifacts and
+  intentionally not committed.

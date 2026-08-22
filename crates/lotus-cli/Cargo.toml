@@ -1,0 +1,17 @@
+[package]
+name = "lotus-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Command-line interface for LotusOS workspaces"
+
+[[bin]]
+name = "lotus"
+path = "src/main.rs"
+
+[dependencies]
+lotus-core = { path = "../lotus-core" }
+serde_json.workspace = true
+
+[package.metadata.notes]
+trust = "`add` prompts for a trust decision unless --trust is passed"

@@ -11,14 +11,23 @@
 
 ## LotusOS Product Guardrails
 
-- LotusOS is a full bootable Linux-based operating system image.
-- Lotus Shell is the custom app/interface layer inside LotusOS.
-- Do not treat Lotus Shell as the whole OS.
-- Do not write a custom kernel.
-- Do not create a custom package manager.
-- Do not replace systemd.
-- Do not build a desktop environment from scratch.
-- Do not claim ISO, installer, branding, or AI functionality works until verified.
+- LotusOS is a local-first developer workspace runtime: it defines, starts,
+  supervises, diagnoses, stops, and restores a project's operating context as
+  one workspace declared in a versioned `lotus.toml`.
+- Lotus Shell is the desktop app (Tauri) frontend; the `lotus` CLI is the other
+  frontend. Both must share the single core engine in `crates/lotus-core` —
+  never duplicate engine behavior in either frontend.
+- Do not reintroduce the retired Debian/ISO/KDE/Calamares/VM product. That era
+  is archived under `docs/archive/os-image-era/` and its paths were removed.
+- Do not write a custom kernel, package manager, or init system; do not build
+  a desktop environment.
+- The product must keep working with no AI, no cloud services, no accounts,
+  and no external SaaS APIs.
+- Trust is explicit: never execute commands from an untrusted or changed
+  manifest; never weaken the trust gate for convenience.
+- Diagnostics never expose secret values (env var names only).
+- Never kill processes to free ports, and never kill by PID without verifying
+  the platform identity token.
 
 ## Implementation Rules
 
@@ -30,20 +39,25 @@
 - Match the existing style and local conventions.
 - Remove only the unused imports, variables, or functions that your own changes made obsolete.
 - If unrelated dead code or design issues appear, mention them instead of changing them.
+- Keep all OS-specific behavior inside `lotus-core/src/platform/`; domain logic
+  must not branch on the operating system.
 
 ## Execution Rules
 
 - Turn the request into a concrete goal before coding.
 - For non-trivial tasks, write a brief plan with a verification step for each major step.
 - Prefer verifiable progress over broad rewrites.
-- Keep all OS build commands reproducible.
-- Keep generated artifacts out of source control unless intentionally documented.
+- Keep build/test commands reproducible (`cargo test`, `scripts/smoke-e2e.ps1`).
+- Keep generated artifacts out of source control (`target/`, Tauri `gen/`,
+  logs, ledgers).
 
 ## Verification Rules
 
 - Never claim success without verification.
 - Use the narrowest reasonable check.
-- For OS work, distinguish scaffolded, built, booted, and installed states.
+- Distinguish scaffolded, built, booted, and installed states where relevant.
+- Windows is the verified platform; label anything else designed/pending per
+  `docs/platform-support.md`.
 - If something could not be verified, say that explicitly.
 
 ## Communication Rules
@@ -51,4 +65,3 @@
 - Separate facts, assumptions, and interpretation.
 - Surface tradeoffs early.
 - Report what changed, how it was verified, and what remains uncertain.
-
