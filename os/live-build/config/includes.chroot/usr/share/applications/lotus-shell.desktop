@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Lotus Shell
-Comment=LotusOS Preview workspace surface
-Exec=/opt/lotus-shell/lotus-shell
-Icon=lotus-shell
-Terminal=false
-Categories=Utility;Development;
