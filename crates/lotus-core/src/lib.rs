@@ -1,8 +1,8 @@
 mod error;
-mod ledger;
+pub mod ledger;
 pub mod manifest;
 pub mod paths;
-mod trust;
+pub mod trust;
 pub mod util;
 
 pub mod checkpoint;

@@ -417,7 +417,7 @@ impl Engine {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 pub struct RestorePreview {
     pub checkpoint: checkpoint::Checkpoint,
     pub drift: Vec<checkpoint::Drift>,

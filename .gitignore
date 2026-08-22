@@ -25,3 +25,9 @@ Thumbs.db
 /shell/lotus-shell/node_modules/
 /shell/lotus-shell/dist/
 /shell/lotus-shell/src-tauri/target/
+
+# Rust workspace build output (repo-root target)
+/target/
+
+# Tauri generated schemas
+/shell/lotus-shell/src-tauri/gen/

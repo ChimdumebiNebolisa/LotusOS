@@ -1,19 +1,15 @@
 [package]
 name = "lotus-shell"
-version = "0.1.0"
-description = "Lotus Shell for LotusOS"
-authors = ["LotusOS Project"]
-edition = "2021"
+version.workspace = true
+description = "Lotus Shell desktop app for LotusOS workspaces"
+edition.workspace = true
+license.workspace = true
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+lotus-core = { path = "../../../crates/lotus-core" }
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 tauri = { version = "2", features = [] }
-
-[profile.release]
-codegen-units = 1
-lto = true
-panic = "abort"
-strip = true
