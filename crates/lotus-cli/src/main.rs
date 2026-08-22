@@ -98,8 +98,7 @@ fn cmd_add(engine: &Engine, args: &[String]) -> Result<(), LotusError> {
     }
 
     // Parse first so the trust decision is based on validated content.
-    let (manifest, _hash) =
-        Manifest::load(&root.join("lotus.toml")).map_err(LotusError::from)?;
+    let (manifest, _hash) = Manifest::load(&root.join("lotus.toml"))?;
     print_trust_summary(&manifest);
 
     let granted = if trust {
