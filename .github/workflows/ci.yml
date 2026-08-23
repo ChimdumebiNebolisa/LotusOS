@@ -40,7 +40,7 @@ jobs:
       - name: Clippy (workspace, all targets, warnings as errors)
         run: cargo clippy --workspace --all-targets -- -D warnings
 
-      - name: Tests (workspace: unit + adversarial supervision suite)
+      - name: "Tests (workspace: unit + adversarial supervision suite)"
         run: cargo test --workspace
 
       - name: End-to-end smoke test
