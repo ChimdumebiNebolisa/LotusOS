@@ -18,7 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@stable
+      # Pinned by rust-toolchain.toml; keep in sync with it.
+      - uses: dtolnay/rust-toolchain@1.94.1
         with:
           components: clippy
 
@@ -56,7 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.94.1
         with:
           components: clippy
 
