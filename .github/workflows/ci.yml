@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Verified platform lane: everything AGENTS.md calls verified runs here.
+  windows:
+    name: windows / test + clippy + smoke
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: shell/lotus-shell/package-lock.json
+
+      # Frontend first so the Tauri context macro always finds ../dist.
+      - name: Build frontend
+        working-directory: shell/lotus-shell
+        run: |
+          npm ci
+          npm run build
+
+      - name: Clippy (workspace, all targets, warnings as errors)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Tests (workspace: unit + adversarial supervision suite)
+        run: cargo test --workspace
+
+      - name: End-to-end smoke test
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-e2e.ps1
+
+  # Compile/lint lane for non-Windows platform code plus pure unit tests.
+  # Full integration supervision is Windows-verified only by design
+  # (docs/platform-support.md); do not read this job as full Linux support.
+  linux-unit:
+    name: linux / clippy + core unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Clippy (core engine + CLI for unix target)
+        run: cargo clippy -p lotus-core -p lotus-cli --all-targets -- -D warnings
+
+      - name: Core unit tests
+        run: cargo test -p lotus-core --lib
