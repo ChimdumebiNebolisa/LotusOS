@@ -586,7 +586,7 @@ fn doctor_never_prints_env_var_values() {
         !rendered.contains("super-secret-do-not-print-42"),
         "SECRET VALUE LEAKED: {rendered}"
     );
-    let _ = std::env::remove_var("LOTUS_TEST_SECRET_VALUE");
+    std::env::remove_var("LOTUS_TEST_SECRET_VALUE");
 }
 
 // ---------------------------------------------------------------- corrupt state

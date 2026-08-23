@@ -1,0 +1,4 @@
+# Pinned toolchain so local builds and CI never diverge on compiler lints.
+# Bump deliberately together with CI expectations.
+[toolchain]
+channel = "1.94.1"

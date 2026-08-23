@@ -95,7 +95,7 @@ pub fn list(layout: &Paths, key: &str) -> Vec<Checkpoint> {
                 .collect()
         })
         .unwrap_or_default();
-    out.sort_by(|a, b| b.created_at_ms.cmp(&a.created_at_ms));
+    out.sort_by_key(|c| std::cmp::Reverse(c.created_at_ms));
     out
 }
 
